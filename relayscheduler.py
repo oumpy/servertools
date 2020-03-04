@@ -8,7 +8,8 @@ from slack import WebClient
 import argparse
 # from random import randrange
 from bisect import bisect_right
-
+import hashlib
+ 
 # Example:
 # python relayscheduler.py
 #
@@ -70,11 +71,14 @@ def get_channel_id(client, channel_name):
         return target['id']
 
 def next_writers(members, n, lastwriter):
-    members = list(members)
-    members.sort()
+    def hashf(key):
+        return hashlib.sha256(key.encode()).hexdigest()
+    hashed_members = [ (hashf(m),m) for m in members ]
+    hashed_members.sort()
     N = len(members)
-    s = bisect_right(members, lastwriter)
-    return [ members[(s+i) % N] for i in range(n) ]
+    hashed_lastwriter = (hashf(lastwriter), lastwriter)
+    s = bisect_right(hashed_members, hashed_lastwriter)
+    return [ hashed_members[(s+i) % N][1] for i in range(n) ]
 
 
 if __name__ == '__main__':
