@@ -86,6 +86,8 @@ if __name__ == '__main__':
     parser.add_argument('--mute', help='post in thread without showing on channel.',
                         action='store_true')
     parser.add_argument('-c', '--channel', default=channel_name,
+                        help='slack channel to read & post.')
+    parser.add_argument('-o', '--outchannel', default=None,
                         help='slack channel to post.')
     parser.add_argument('--slacktoken', default=None,
                         help='slack bot token.')
@@ -189,6 +191,8 @@ if __name__ == '__main__':
     message = '\n'.join(post_lines)
 
     if post_to_slack:
+        if args.outchannel:
+            channel_id = get_channel_id(web_client, args.outchannel)
         params={
             'channel': channel_id,
             'text': message,
