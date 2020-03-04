@@ -222,4 +222,5 @@ if __name__ == '__main__':
         # elif os.path.isfile(ts_file):
         #     os.remove(ts_file)
     else:
+        print('App ID:', my_id)
         print(message)
