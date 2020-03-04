@@ -29,7 +29,7 @@ year_last_day = 1223 # 12月23日まで
 
 excluded_members = set()
 
-channel_name = 'python会-リレー投稿'
+channel_name = 'リレー投稿'
 appdir = '/var/relaytools/'
 base_dir = os.environ['HOME'] + appdir
 history_dir = base_dir + 'history/'
