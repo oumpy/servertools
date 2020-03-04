@@ -6,8 +6,8 @@ import os
 from datetime import date, timedelta
 from slack import WebClient
 import argparse
-import random
-from bisect import bisect_left
+# from random import randrange
+from bisect import bisect_right
 
 # Example:
 # python relayscheduler.py
@@ -17,23 +17,20 @@ post_to_slack = True
 # update_link = True
 slacktoken_file = 'slack_token'
 
-min_interval_weeks = 4
+lookback_weeks = 8
 min_grace = 3 # days: 4の場合、木曜までなら翌週月曜から、それ以後なら翌々週。
 relaydays = [0, 1, 2, 3, 4] # cronとは曜日番号が違うので注意。
 # 平日に投稿、水曜に発表、月曜にリマインド、を想定。
 
 weekdays = ['月', '火', '水', '木', '金', '土', '日']
-year_start_day =  104 # 1月4日から
-year_final_day = 1223 # 12月23日まで
-
-# relative probs
-class_probs = [1.0, 0.5, 0.5] # regulars, OBs, accosiates
+year_first_day =  104 # 1月4日から
+year_last_day = 1223 # 12月23日まで
 
 channel_name = 'python会-リレー投稿'
 appdir = '/var/relaytools/'
 base_dir = os.environ['HOME'] + appdir
 history_dir = base_dir + 'history/'
-memberlist_file = 'memberlist.txt'
+#memberlist_file = 'memberlist.txt'
 ts_file = 'ts-relay'
 history_file_format = 'week-%d.txt' # week ID.
 week_str = ['今週', '来週', '来々週']
@@ -72,27 +69,13 @@ def get_channel_id(client, channel_name):
     else:
         return target['id']
 
-def choose_writer(members, probs):
+def next_writers(members, n, lastwriter):
     members = list(members)
-    accum_prob = []
-    s = 0
-    for m in members:
-        s += probs[m]
-        accum_prob.append(s)
-    p = random.random() * accum_prob[-1]
-    n = bisect_left(accum_prob, p)
-    return members[n]
+    members.sort()
+    N = len(members)
+    s = bisect_right(members, lastwriter)
+    return [ members[(s+i) % N] for i in range(n) ]
 
-def next_writers(members, probs, n):
-    if len(members) < n:
-        return list(members) # buggy.
-    else:
-        ret = []
-        for _ in range(n):
-            w = choose_writer(members, probs)
-            ret.append(w)
-            members.remove(w)
-        return ret
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -112,9 +95,9 @@ if __name__ == '__main__':
         post_to_slack = False
     channel_name = args.channel
 
-    memberlist_file_path = base_dir + memberlist_file
-    history_file_path_format = history_dir + history_file_format
+    # memberlist_file_path = base_dir + memberlist_file
     slacktoken_file_path = base_dir + slacktoken_file
+    history_file_path_format = history_dir + history_file_format
 
     today = date.today()
     ADfirst = date(1,1,1) # AD1.1.1 is Monday
@@ -136,16 +119,20 @@ if __name__ == '__main__':
         globals()[k] = v
 
     # read the previous record
-    done_users = set()
-    for i in range(min_interval_weeks):
-        past_id = week_id - 1 - i
+    recent_writers = []
+    for i in range(-lookback_weeks, 0):
+        past_id = week_id + i
         hf = history_file_path_format % past_id
         if os.path.exists(hf):
             with open(hf, 'r') as f:
                 lines = f.readlines()
                 for line in lines:
                     date, person = line.rstrip().split()[:2]
-                    done_users.add(person)
+                    recent_writers.append(person)
+    if recent_writers:
+        last_writer = recent_writers[-1]
+    else:
+        last_writer = ''
 
     if args.slacktoken:
         token = args.slacktoken
@@ -174,22 +161,14 @@ if __name__ == '__main__':
         else:
             exit()
     else:
-        # read member prob list
-        member_probs = defaultdict(lambda: 1)
-        if os.path.exists(memberlist_file_path):
-            with open(memberlist_file_path, 'r') as f:
-                lines = f.readlines()
-                for line in lines:
-                    nickname, slackid, kind = line.rstrip().split('\t')[:3]
-                    member_probs[slackid] = class_probs[int(kind)]
-
         channel_info = web_client.api_call('channels.info', params={'channel':channel_id})['channel']
         # ensure I am a member of the channel.
         # if not channel_info['is_member']:
         #     return
-        members = set(channel_info['members']) - done_users
+        members = set(channel_info['members'])
         members.discard(my_id)
-        writers = next_writers(members, member_probs, len(relaydays))
+        writers = next_writers(members, len(relaydays), last_writer)
+        lastwriter = writers[-1]
         for i, d in enumerate(relaydays):
             writers_dict[d] = writers[i]
         # write the new history
