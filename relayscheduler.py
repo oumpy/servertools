@@ -27,6 +27,8 @@ weekdays = ['月', '火', '水', '木', '金', '土', '日']
 year_first_day =  104 # 1月4日から
 year_last_day = 1223 # 12月23日まで
 
+excluded_members = set()
+
 channel_name = 'python会-リレー投稿'
 appdir = '/var/relaytools/'
 base_dir = os.environ['HOME'] + appdir
@@ -34,6 +36,7 @@ history_dir = base_dir + 'history/'
 #memberlist_file = 'memberlist.txt'
 ts_file = 'ts-relay'
 history_file_format = 'week-%d.txt' # week ID.
+excluded_members_file = 'excluded_members.txt'
 week_str = ['今週', '来週', '来々週']
 post_format = {
     'post_header_format' : '＊【%sのリレー投稿 担当者のお知らせ】＊',
@@ -104,6 +107,7 @@ if __name__ == '__main__':
     # memberlist_file_path = base_dir + memberlist_file
     slacktoken_file_path = base_dir + slacktoken_file
     history_file_path_format = history_dir + history_file_format
+    excluded_members_file_path = base_dir + excluded_members_file
 
     today = date.today()
     ADfirst = date(1,1,1) # AD1.1.1 is Monday
@@ -167,11 +171,16 @@ if __name__ == '__main__':
         else:
             exit()
     else:
+        if os.path.exists(excluded_members_file_path):
+            with open(excluded_members_file_path, 'r') as f:
+                lines = f.readlines()
+                for line in lines:
+                    excluded_members.add(line.rstrip().split()[1])
         channel_info = web_client.api_call('channels.info', params={'channel':channel_id})['channel']
         # ensure I am a member of the channel.
         # if not channel_info['is_member']:
         #     return
-        members = set(channel_info['members'])
+        members = set(channel_info['members']) - excluded_members
         members.discard(my_id)
         writers = next_writers(members, len(relaydays), last_writer)
         lastwriter = writers[-1]
