@@ -47,6 +47,10 @@ post_format = {
 post_format_reminder = {
     'post_header_format' : '*【%sのリレー投稿 リマインダ】*',
 }
+post_format_list = {
+    'post_header_format' : '＊【リレー投稿 %s以降の順番予定】＊',
+    'post_line_format' : '<@%s> さん', # month, day, weekday, writer
+}
 
 def get_channel_list(client, limit=200):
     params = {
@@ -92,6 +96,8 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('--mute', help='post in thread without showing on channel.',
                         action='store_true')
+    parser.add_argument('--list', help='list the future orders.',
+                        action='store_true')
     parser.add_argument('-c', '--channel', default=channel_name,
                         help='slack channel to read & post.')
     parser.add_argument('-o', '--outchannel', default=None,
@@ -119,21 +125,28 @@ if __name__ == '__main__':
     week_id = date_id // 7
     history_file_path = history_file_path_format % week_id
 
-    if os.path.exists(history_file_path):
+    if args.list:
+        args.reminder = False
+    elif os.path.exists(history_file_path):
         args.reminder = True
     if args.reminder:
         #update_link = False
         for k, v in post_format_reminder.items():
+            post_format[k] = v
+    elif args.list:
+        for k, v in post_format_list.items():
             post_format[k] = v
     for k, v in post_format.items():
         globals()[k] = v
 
     # read the previous record
     recent_writers = []
-    for i in range(-lookback_weeks, 0):
+    lastweek_id = 0
+    for i in range(-lookback_weeks, 1):
         past_id = week_id + i
         hf = history_file_path_format % past_id
         if os.path.exists(hf):
+            lastweek_id = past_id
             with open(hf, 'r') as f:
                 lines = f.readlines()
                 for line in lines:
@@ -182,20 +195,28 @@ if __name__ == '__main__':
         #     return
         members = set(channel_info['members']) - excluded_members
         members.discard(my_id)
-        writers = next_writers(members, len(relaydays), last_writer)
-        lastwriter = writers[-1]
-        for i, d in enumerate(relaydays):
-            writers_dict[d] = writers[i]
-        # write the new history
-        with open(history_file_path, 'w') as f:
-            for d, u in writers_dict.items():
-                print(date_id + d, u, file=f)
+        if args.list:
+            for d, writer in enumerate(next_writers(members, len(members), last_writer)):
+                writers_dict[d] = writer
+        else:
+            writers = next_writers(members, len(relaydays), last_writer)
+            lastwriter = writers[-1]
+            for i, d in enumerate(relaydays):
+                writers_dict[d] = writers[i]
+            # write the new history
+            with open(history_file_path, 'w') as f:
+                for d, u in writers_dict.items():
+                    print(date_id + d, u, file=f)
 
+    if args.list: week_id = max(week_id, lastweek_id + 1)
     post_lines = [post_header_format % week_str[week_id - thisweek_id]]
     if writers_dict:
         for d, writer in writers_dict.items():
-            date = startday + timedelta(d)
-            post_lines.append(post_line_format % (date.month, date.day, weekdays[d], writer))
+            if args.list:
+                post_lines.append(post_line_format % writer)
+            else:
+                date = startday + timedelta(d)
+                post_lines.append(post_line_format % (date.month, date.day, weekdays[d], writer))
         post_lines.append(
             post_footer
         )
