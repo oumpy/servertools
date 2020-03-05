@@ -37,7 +37,7 @@ history_dir = base_dir + 'history/'
 ts_file = 'ts-relay'
 history_file_format = 'week-%d.txt' # week ID.
 excluded_members_file = 'excluded_members.txt'
-week_str = ['今週', '来週', '来々週']
+week_str = ['今週', '来週', '再来週']
 post_format = {
     'post_header_format' : '＊【%sのリレー投稿 担当者のお知らせ】＊',
     'post_line_format' : '%d月%d日(%s)：<@%s> さん', # month, day, weekday, writer
