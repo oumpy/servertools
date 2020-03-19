@@ -96,6 +96,9 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('--mute', help='post in thread without showing on channel.',
                         action='store_true')
+    parser.add_argument('--solopost',
+                        help='post an idependent message out of the thread, not destroying previous thread info',
+                        action='store_true')
     parser.add_argument('--list', help='list the future orders.',
                         action='store_true')
     parser.add_argument('-c', '--channel', default=channel_name,
@@ -235,9 +238,10 @@ if __name__ == '__main__':
         if os.path.isfile(ts_file):
             with open(ts_file, 'r') as f:
                 ts = f.readline().rstrip()
-                params['thread_ts'] = ts
-                if not args.mute:
-                    params['reply_broadcast'] = 'True'
+                if not args.solopost:
+                    params['thread_ts'] = ts
+                    if not args.mute:
+                        params['reply_broadcast'] = 'True'
         else:
             ts = None
         response = web_client.api_call(
