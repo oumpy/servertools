@@ -1,0 +1,17 @@
+#!/bin/sh
+account="$1"
+pubkey="$2"
+sshdir="/home/$account/.ssh"
+keyfile="$sshdir/authorized_keys"
+if [ -f "$keyfile" ]; then
+    echo "$pubkey" >> "$keyfile"
+else
+    if [ ! -d "$sshdir" ]; then
+        mkdir "$sshdir"
+        chmod 700 "$sshdir"
+        chown "$account"."$account" "$sshdir"
+    fi
+    echo "$pubkey" > "$keyfile"
+    chmod 600 "$keyfile"
+    chown "$account"."$account" "$keyfile"
+fi
