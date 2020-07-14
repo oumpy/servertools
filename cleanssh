@@ -1,0 +1,5 @@
+#!/bin/sh
+myttydev=`tty`
+mytty=${myttydev#/dev/}
+# mytty=${mytty#tty}
+ps -ax | awk '$5 == "sshd:" { print $1 " " $6 }' | grep `whoami`@ | grep -v "$mytty$" | awk '{ print $1 }' | xargs kill
