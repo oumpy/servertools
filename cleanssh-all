@@ -1,0 +1,6 @@
+#!/bin/bash
+ttygrep="grep -e $^"
+while read -r tty; do
+  ttygrep="$ttygrep -e $tty$"
+done < <(finger | awk -F '  +' '$4~/^[0-9]+d$/{print $3}')
+ps -ax | awk '$5 == "sshd:" { print $1 " " $6 }' | $ttygrep | awk '{ print $1 }' #| xargs kill
