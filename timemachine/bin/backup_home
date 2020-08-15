@@ -56,7 +56,7 @@ if __name__ == '__main__':
             continue
         for ex_target in expandparentheses(s):
             options.append('--exclude')
-            options.append('\'' + ex_target + '\'')
+            options.append(ex_target)
 
     # exclusions by each user
     sourcedir = targets[0]
@@ -75,7 +75,7 @@ if __name__ == '__main__':
                 elif ex_target[0] == '/':
                     ex_target = '/' + user + ex_target
                 options.append('--exclude')
-                options.append('\'' + ex_target + '\'')
+                options.append(ex_target)
 
     # Execute rsync
     subprocess.call(command + options + targets)
