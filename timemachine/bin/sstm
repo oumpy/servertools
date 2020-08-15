@@ -93,7 +93,7 @@ if __name__ == '__main__':
     keepflag[-1] = True # always mark the newest snapshot
 
     # mark necessary volumes
-    config['rule'].sort(lambda x: -x[0]) # larger interval first.
+    config['rule'].sort(key=lambda x: -x[0]) # larger interval first.
     for interval_hour, cycles in config['rule']:
         interval = datetime.timedelta(hours=interval_hour)
         past_limit = timestamp[-1] - interval*cycles
