@@ -61,7 +61,8 @@ if __name__ == '__main__':
     # exclusions by each user
     sourcedir = targets[0]
     users = os.listdir(sourcedir)
-    users += [os.path.join('share', d) for d in os.listdir(os.path.join(sourcedir, 'share'))]
+    if os.path.isdir(os.path.join(sourcedir, 'share')):
+        users += [os.path.join('share', d) for d in os.listdir(os.path.join(sourcedir, 'share'))]
     for user in users:
         ex_list = os.path.join(sourcedir, user, user_exclude_filename)
         if os.path.isfile(ex_list):
