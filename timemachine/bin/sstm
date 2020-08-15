@@ -9,7 +9,7 @@
 # Works in Btrfs only.
 
 import os, subprocess
-from datetime import datetime
+import datetime
 import argparse
 import yaml
 import re
@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
     # make new snapshot for current status of the volume
     ssdir = args.ssdir
-    newss = datetime.now().strftime(ssformat)
+    newss = datetime.datetime.now().strftime(ssformat)
     newss_path = os.path.join(ssdir, newss)
     subprocess.call(
         ['btrfs', 'subvolume', 'snapshot',
@@ -88,7 +88,7 @@ if __name__ == '__main__':
                     if os.path.isdir(os.path.join(ssdir, d)) and ssreg.fullmatch(d)]
     snapshots.sort()
     N = len(snapshots)
-    timestamp = [ datetime.strptime(ss, ssformat) for ss in snapshots]
+    timestamp = [ datetime.datetime.strptime(ss, ssformat) for ss in snapshots]
     keepflag = [False]*N
     keepflag[-1] = True # always mark the newest snapshot
 
