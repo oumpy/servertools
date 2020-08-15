@@ -34,7 +34,8 @@ def expandparentheses(S):
                 pool.append((v,d+1))
     return ret
 
-user_exclude_filename = '.nobackup'
+user_exclude_filename = '.backupconf'
+headers = [['in','include'], ['out','ex','exclude']]
 
 if __name__ == '__main__':
     if len(sys.argv) < 4:
@@ -52,7 +53,8 @@ if __name__ == '__main__':
 
     for s in excludes:
         s = s.strip()
-        if len(s) == 0 or s[0] == '#':
+        s = s.split('#')[0]
+        if len(s) == 0:
             continue
         for ex_target in expandparentheses(s):
             options.append('--exclude')
@@ -63,19 +65,29 @@ if __name__ == '__main__':
     users = os.listdir(sourcedir)
     if os.path.isdir(os.path.join(sourcedir, 'share')):
         users += [os.path.join('share', d) for d in os.listdir(os.path.join(sourcedir, 'share'))]
+    useroptions = [[],[]]
+    optionname = ['--include', '--exclude']
     for user in users:
         ex_list = os.path.join(sourcedir, user, user_exclude_filename)
         if os.path.isfile(ex_list):
             with open(ex_list, 'r') as f:
-                excludes = f.readlines()
-            for ex_target in excludes:
-                ex_target = ex_target.strip()
-                if len(ex_target) == 0 or ex_target[0] == '#' or '..' in ex_target:
+                lines = f.readlines()
+            for line in lines:
+                line = line.strip()
+                line = line.split('#')[0]
+                if len(line) == 0 or '..' in line:
                     continue
-                elif ex_target[0] == '/':
-                    ex_target = '/' + user + ex_target
-                options.append('--exclude')
-                options.append(ex_target)
+                line_separated = line.split()
+                if len(line_separated) < 2:
+                    continue
+                else:
+                    h, target = line_separated[:2]
+                    if target[0] == '/':
+                        target = '/' + user + target
+                    for i in range(2):
+                        if h in headers[i]:
+                            useroptions[i].extend([optionname[i], target])
+                            break
 
     # Execute rsync
-    subprocess.call(command + options + targets)
+    subprocess.call(command + useroptions[0] + options + useroptions[1] + targets)
