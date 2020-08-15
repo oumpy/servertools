@@ -1,5 +1,5 @@
 /.snapshots/
-/snapshots/**
+/timemachine/**
 /*/.cache/**
 /*/Downloads/**
 /*/ダウンロード/**
