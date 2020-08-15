@@ -1,0 +1,5 @@
+# [interval/hour, cycles]
+rule:
+  - [240,  38] # 38 decdays (per 10 days for 1 year)
+  - [720,  38] # 38 months  (month = 30 days, per month for 3 years)
+  - [2160, -1] # infinite trimonths (per 3 months forever)
