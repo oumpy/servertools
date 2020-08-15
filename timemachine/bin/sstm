@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+# sstm: SnapShot TimeMachine
+#
+# How to Use:
+# # sstm /path/to/originalsubvol /path/to/snapshots
+#
+# Works in Btrfs only.
+
 import os, subprocess
 from datetime import datetime
 import argparse
@@ -7,18 +15,13 @@ import yaml
 import re
 from bisect import bisect_left
 
-# Example:
-# # sstimemachine /path/to/originalsubvol /path/to/snapshots
-#
-# Works in Btrfs only.
-
 defaultconf = {
     # [interval/hour, cycles]
-    'rule': {
+    'rule': [
         [1, 24],    # 24 hours
         [24, 30],   # 30 days
         [720, -1],  # infinite months
-    },
+    ],
 }
 
 if __name__ == '__main__':
@@ -57,6 +60,9 @@ if __name__ == '__main__':
             config = yaml.load(yml)
     else:
         config = defaultconf
+
+    if len(args.suffix) > 0:
+        args.suffix = '-' + args.suffix
 
     # snapshot name : year-date-time + suffix
     ssreg = re.compile(r'([0-9]{4})-([0-9]{4})-([0-9]{4})' + args.suffix)
