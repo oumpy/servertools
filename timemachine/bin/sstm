@@ -57,7 +57,7 @@ if __name__ == '__main__':
     # read setting file
     if args.config:
         with open(args.config, 'r') as yml:
-            config = yaml.load(yml)
+            config = yaml.safe_load(yml)
     else:
         config = defaultconf
 
