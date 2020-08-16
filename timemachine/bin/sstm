@@ -17,11 +17,25 @@ from bisect import bisect_left
 
 defaultconf = {
     # [interval/hour, cycles]
+    'unit': 'hour',
     'rule': [
         [1, 24],    # 24 hours
         [24, 30],   # 30 days
         [720, -1],  # infinite months
     ],
+}
+
+interval_unit = { # minute = 1
+    'minute': 1,
+    'hour': 60,
+    'day': 60 * 24,
+    'week': 60 * 24 * 7,
+    'decday': 60 * 24 * 10,
+    'month': 60 * 24 * 30,
+    'trimonth': 60 * 24 * 90,
+    'quarteryear': 60 * 24 * 90,
+    'halfyear': 60 * 24 * 180,
+    'year': 60 * 24 * 360,
 }
 
 if __name__ == '__main__':
@@ -55,11 +69,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # read setting file
+    config = dict()
+    config.update(defaultconf)
     if args.config:
         with open(args.config, 'r') as yml:
-            config = yaml.safe_load(yml)
-    else:
-        config = defaultconf
+            config.update(yaml.safe_load(yml))
 
     if len(args.suffix) > 0:
         args.suffix = '-' + args.suffix
@@ -94,8 +108,8 @@ if __name__ == '__main__':
 
     # mark necessary volumes
     config['rule'].sort(key=lambda x: -x[0]) # larger interval first.
-    for interval_hour, cycles in config['rule']:
-        interval = datetime.timedelta(hours=interval_hour)
+    for interval_n, cycles in config['rule']:
+        interval = datetime.timedelta(minutes=interval_n * config['unit'])
         past_limit = timestamp[-1] - interval*cycles
         if cycles < 0 or past_limit < timestamp[0]:
             prev = 0
