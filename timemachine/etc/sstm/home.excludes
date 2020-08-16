@@ -4,5 +4,5 @@
 /*/Downloads/**
 /*/ダウンロード/**
 /*/.pyenv/versions/*/**
-/*/(ana|mini)conda3/(include|bin|lib|pkgs|envs)/**
+/*/(ana|mini)conda3/(include|bin|lib|lib64|pkgs|envs|jre/lib|share|man)/**
 *.(zip|gz|lzh|7z|jpeg|jpg|png|tiff|svg|dcm)

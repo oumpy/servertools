@@ -4,7 +4,7 @@
 # sstm: SnapShot TimeMachine
 #
 # How to Use:
-# # sstm /path/to/originalsubvol /path/to/snapshots
+# # sstm [options] /path/to/originalsubvol /path/to/snapshots
 #
 # Works in Btrfs only.
 
