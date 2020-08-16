@@ -3,6 +3,9 @@
 import os, subprocess
 import sys
 
+user_exclude_filename = '.backupconf'
+headers = [['in','include'], ['out','ex','exclude']]
+
 def expandparentheses(S):
     base = []
     group = []
@@ -33,9 +36,6 @@ def expandparentheses(S):
             else:
                 pool.append((v,d+1))
     return ret
-
-user_exclude_filename = '.backupconf'
-headers = [['in','include'], ['out','ex','exclude']]
 
 if __name__ == '__main__':
     if len(sys.argv) < 4:
