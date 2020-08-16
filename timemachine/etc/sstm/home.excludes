@@ -1,0 +1,8 @@
+/.snapshots/
+/timemachine/**
+/*/.cache/**
+/*/Downloads/**
+/*/ダウンロード/**
+/*/.pyenv/versions/*/**
+/*/(ana|mini)conda3/(include|bin|lib|pkgs|envs)/**
+*.(zip|gz|lzh|7z|jpeg|jpg|png|tiff|svg|dcm)

@@ -1,0 +1,7 @@
+# [interval/hour, cycles]
+unit:
+  hour
+rule:
+  - [1, 24]   # 24 hours
+  - [24, 30]  # 30 days
+  - [720, -1] # infinite months
