@@ -109,7 +109,7 @@ if __name__ == '__main__':
     # mark necessary volumes
     config['rule'].sort(key=lambda x: -x[0]) # larger interval first.
     for interval_n, cycles in config['rule']:
-        interval = datetime.timedelta(minutes=interval_n * config['unit'])
+        interval = datetime.timedelta(minutes=interval_n * interval_unit[config['unit']])
         past_limit = timestamp[-1] - interval*cycles
         if cycles < 0 or past_limit < timestamp[0]:
             prev = 0
