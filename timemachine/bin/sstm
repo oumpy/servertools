@@ -133,7 +133,7 @@ if __name__ == '__main__':
     for i in range(N):
         if not keepflag[i]:
             target = os.path.join(ssdir, snapshots[i])
-            subprocess.call(['btrfs', 'subvolume', 'delete', target])
             if args.quota:
                 subvolid = subprocess.check_output(['btrfs_subvolid', target]).decode().split('\n')[0]
                 subprocess.call(['btrfs', 'qgroup', 'destroy', '0/{}'.format(subvolid), ssdir])
+            subprocess.call(['btrfs', 'subvolume', 'delete', target])
