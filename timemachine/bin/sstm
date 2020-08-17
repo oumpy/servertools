@@ -66,6 +66,12 @@ if __name__ == '__main__':
         default=None,
         help='script to execute on the snapshot.',
     )
+    parser.add_argument(
+        '-q',
+        '--quota',
+        action='store_true',
+        help='destroy associating qgroup at the same time as the snapshot. (Quota should be enabled.)',
+    )
     args = parser.parse_args()
 
     # read setting file
@@ -126,7 +132,8 @@ if __name__ == '__main__':
     # delete unnecessary snapshots
     for i in range(N):
         if not keepflag[i]:
-            subprocess.call(
-                ['btrfs', 'subvolume', 'delete',
-                 os.path.join(ssdir, snapshots[i]),
-                ])
+            target = os.path.join(ssdir, snapshots[i])
+            if args.quota:
+                subvolid = subprocess.check_output(['btrfs_subvolid', target]).decode().split('\n')[0]
+                subprocess.call(['btrfs', 'qgroup', 'destroy', '0/{}'.format(subvolid), ssdir])
+            subprocess.call(['btrfs', 'subvolume', 'delete', target])
