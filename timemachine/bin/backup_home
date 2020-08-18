@@ -76,6 +76,8 @@ if __name__ == '__main__':
                     h, target = line_separated[:2]
                     if target[0] == '/':
                         target = os.path.join('/', user, target[1:])
+                    else:
+                        target = os.path.join('/', user, '**', target)
                     for i in range(2):
                         if h in headers[i]:
                             options.extend([optionname[i], target])
