@@ -65,7 +65,7 @@ if __name__ == '__main__':
     users = os.listdir(sourcedir)
     if os.path.isdir(os.path.join(sourcedir, 'share')):
         users += [os.path.join('share', d) for d in os.listdir(os.path.join(sourcedir, 'share'))]
-    useroptions = [[],[]]
+    useroptions = []
     optionname = ['--include', '--exclude']
     for user in users:
         ex_list = os.path.join(sourcedir, user, user_exclude_filename)
@@ -86,8 +86,8 @@ if __name__ == '__main__':
                         target = '/' + user + target
                     for i in range(2):
                         if h in headers[i]:
-                            useroptions[i].extend([optionname[i], target])
+                            useroptions.extend([optionname[i], target])
                             break
 
     # Execute rsync
-    subprocess.call(command + useroptions[0] + options + useroptions[1] + targets)
+    subprocess.call(command + useroptions + options + targets)
