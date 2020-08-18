@@ -3,7 +3,7 @@
 import os, subprocess
 import sys
 
-user_exclude_filename = '.backupconf'
+user_config_filename = '.backupconf'
 headers = [['in','include'], ['out','ex','exclude']]
 
 def expandparentheses(S):
@@ -46,31 +46,23 @@ if __name__ == '__main__':
     ex_list = sys.argv[1]
     targets = sys.argv[-2:]
     command = ['rsync']
-    # options += ['-acAHX', '--delete', '--max-zize=100M']
+    # options += ['-acAHX', '--delete-excluded', '--max-zize=100M']
 
-    with open(ex_list, 'r') as f:
-        excludes = f.readlines()
-
-    for s in excludes:
-        s = s.strip()
-        s = s.split('#')[0]
-        if len(s) == 0:
-            continue
-        for ex_target in expandparentheses(s):
-            options.append('--exclude')
-            options.append(ex_target)
-
-    # exclusions by each user
+    # inclutions/exclusions by each user & global setting
     sourcedir = targets[0]
     users = os.listdir(sourcedir)
     if os.path.isdir(os.path.join(sourcedir, 'share')):
         users += [os.path.join('share', d) for d in os.listdir(os.path.join(sourcedir, 'share'))]
-    useroptions = []
+    users.append('') # /home
+    options = []
     optionname = ['--include', '--exclude']
     for user in users:
-        ex_list = os.path.join(sourcedir, user, user_exclude_filename)
-        if os.path.isfile(ex_list):
-            with open(ex_list, 'r') as f:
+        if user:
+            config_file = os.path.join(sourcedir, user, user_config_filename)
+        else:
+            config_file = sys.argv[1] 
+        if os.path.isfile(config_file):
+            with open(config_file, 'r') as f:
                 lines = f.readlines()
             for line in lines:
                 line = line.strip()
@@ -83,11 +75,11 @@ if __name__ == '__main__':
                 else:
                     h, target = line_separated[:2]
                     if target[0] == '/':
-                        target = '/' + user + target
+                        target = os.path.join('/', user, target[1:])
                     for i in range(2):
                         if h in headers[i]:
-                            useroptions.extend([optionname[i], target])
+                            options.extend([optionname[i], target])
                             break
 
     # Execute rsync
-    subprocess.call(command + useroptions + options + targets)
+    subprocess.call(command + options + targets)
