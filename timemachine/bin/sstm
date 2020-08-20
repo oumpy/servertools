@@ -4,7 +4,7 @@
 # sstm: SnapShot TimeMachine
 #
 # How to Use:
-# # sstm [options] /path/to/originalsubvol /path/to/snapshots
+# # sstm [options] /path/to/originalvol /path/to/snapshots
 #
 # Works in Btrfs only.
 
@@ -42,11 +42,25 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'origvol',
-        help='original subvolume to take snapshots.',
+        help='Mount point of the original volume to take snapshots.',
     )
     parser.add_argument(
         'ssdir',
-        help='directory to make snapshots of the original subvolume.',
+        nargs='?',
+        default=None,
+        help='directory to make snapshots of the original volume. For zfs, omit it.',
+    )
+    parser.add_argument(
+        '-z',
+        '--zfs',
+        default=None,
+        help='name of zfs filesystem. Default: same as the mount point.',
+    )
+    parser.add_argument(
+        '-f',
+        '--filesystem',
+        default='btrfs',
+        help='filesystem of the volume, supporting btrfs & zfs.'
     )
     parser.add_argument(
         '-c',
@@ -89,13 +103,22 @@ if __name__ == '__main__':
     ssformat = '%Y-%m%d-%H%M' + args.suffix
 
     # make new snapshot for current status of the volume
-    ssdir = args.ssdir
     newss = datetime.datetime.now().strftime(ssformat)
-    newss_path = os.path.join(ssdir, newss)
-    subprocess.call(
-        ['btrfs', 'subvolume', 'snapshot',
-         args.origvol, newss_path,
-        ])
+    if args.filesystem.lower() == 'btrfs':
+        newss_path = os.path.join(args.ssdir, newss)
+        subprocess.call(
+            ['btrfs', 'subvolume', 'snapshot',
+            args.origvol, newss_path,
+            ])
+    elif args.filesystem.lower() == 'zfs':
+        if not args.zfs:
+            args.zfs = os.path.join(os.getcwd(), args.origvol).strip('/')
+        if not args.ssdir:
+            args.ssdir = os.path.join(args.origvol, '.zfs/snapshot/')
+        subprocess.call(
+            ['zfs', 'snapshot',
+             '{}@{}'.format(args.zfs, newss),
+            ])
 
     # execute postss script (if specified)
     if args.postss:
@@ -104,8 +127,8 @@ if __name__ == '__main__':
         subprocess.call(postss)
 
     # list existing snapshots & get timestamps
-    snapshots = [ d for d in os.listdir(ssdir)
-                    if os.path.isdir(os.path.join(ssdir, d)) and ssreg.fullmatch(d)]
+    snapshots = [ d for d in os.listdir(args.ssdir)
+                    if os.path.isdir(os.path.join(args.ssdir, d)) and ssreg.fullmatch(d)]
     snapshots.sort()
     N = len(snapshots)
     timestamp = [ datetime.datetime.strptime(ss, ssformat) for ss in snapshots]
@@ -132,8 +155,14 @@ if __name__ == '__main__':
     # delete unnecessary snapshots
     for i in range(N):
         if not keepflag[i]:
-            target = os.path.join(ssdir, snapshots[i])
-            if args.quota:
-                subvolid = subprocess.check_output(['btrfs_subvolid', target]).decode().split('\n')[0]
-                subprocess.call(['btrfs', 'qgroup', 'destroy', '0/{}'.format(subvolid), ssdir])
-            subprocess.call(['btrfs', 'subvolume', 'delete', target])
+            if args.filesystem.lower() == 'btrfs':
+                if args.quota:
+                    subvolid = subprocess.check_output(['btrfs_subvolid', target]).decode().split('\n')[0]
+                    subprocess.call(['btrfs', 'qgroup', 'destroy', '0/{}'.format(subvolid), args.ssdir])
+                subprocess.call(['btrfs', 'subvolume', 'delete',
+                                  os.path.join(args.ssdir, snapshots[i])
+                                ])
+            elif args.filesystem.lower() == 'zfs':
+                subprocess.call(['zfs', 'destroy',
+                                 '{}@{}'.format(args.zfs, snapshots[i])
+                                ])
