@@ -1,0 +1,37 @@
+#!/bin/sh
+source="$1"
+target="$2"
+
+latest="latest"
+prev="previous"
+orig="original"
+
+sync
+if [ -d "$source/$prev" ]; then
+    btrfs subvolume delete "$source/$prev"
+fi
+if [ -d "$target/$prev" ]; then
+    btrfs subvolume delete "$target/$prev"
+fi
+sync
+
+if [ -d "$source/$latest" -a -d "$target/$latest" ]; then
+    mv "$source/$latest" "$source/$prev"
+    mv "$target/$latest" "$target/$prev"
+    sync
+    btrfs subvolume snapshot -r "$source/$orig" "$source/$latest"
+    sync    
+    btrfs send -p "$source/$prev" "$source/$latest" | btrfs receive "$target"
+else
+    if [ -d "$source/$latest" ]; then
+        btrfs subvolume delete "$source/$latest"
+    fi
+    if [ -d "$target/$latest" ]; then
+        btrfs subvolume delete "$target/$latest"
+    fi
+    sync
+    btrfs subvolume snapshot -r "$source/$orig" "$source/$latest"
+    sync
+    btrfs send "$source/$latest" | btrfs receive "$target"
+fi
+sync
