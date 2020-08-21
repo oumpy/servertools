@@ -64,8 +64,7 @@ if __name__ == '__main__':
             with open(config_file, 'r') as f:
                 lines = f.readlines()
             for line in lines:
-                line = line.strip()
-                line = line.split('#')[0]
+                line = line.split('#')[0].strip()
                 if len(line) == 0 or '..' in line:
                     continue
                 line_separated = line.split()
@@ -79,7 +78,8 @@ if __name__ == '__main__':
                         target = os.path.join('/', user, '**', target)
                     for i in range(2):
                         if h in headers[i]:
-                            options.extend([optionname[i], target])
+                            for d in expandparentheses(target):
+                                options.extend([optionname[i], d])
                             break
 
     # Execute rsync
