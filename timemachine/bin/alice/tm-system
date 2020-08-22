@@ -1,0 +1,11 @@
+#!/bin/bash
+sstm -c /usr/local/etc/sstm/system_original.yaml / /mnt/admin/timemachine/private/original-disk/system/snapshots
+sync
+midvol="/mnt/admin/timemachine/private/original-disk/system/backup/original"
+if [ -d $midvol ]; then
+  btrfs subvolume delete $midvol
+  sync
+fi
+btrfs subvolume snapshot /mnt/admin/timemachine/private/original-disk/system/snapshots/latest $midvol
+senddiff /mnt/admin/timemachine/private/original-disk/system/backup /mnt/admin/timemachine/private/backup-disk/system/backup
+sstm -c /usr/local/etc/sstm/system_original.yaml -s backup /mnt/admin/timemachine/private/backup-disk/system/backup/latest /mnt/admin/timemachine/private/backup-disk/system/snapshots
