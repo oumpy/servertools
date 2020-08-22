@@ -156,11 +156,12 @@ if __name__ == '__main__':
     for i in range(N):
         if not keepflag[i]:
             if args.filesystem.lower() == 'btrfs':
+                target = os.path.join(args.ssdir, snapshots[i])
                 if args.quota:
                     subvolid = subprocess.check_output(['btrfs_subvolid', target]).decode().split('\n')[0]
                     subprocess.call(['btrfs', 'qgroup', 'destroy', '0/{}'.format(subvolid), args.ssdir])
                 subprocess.call(['btrfs', 'subvolume', 'delete',
-                                  os.path.join(args.ssdir, snapshots[i])
+                                 target,
                                 ])
             elif args.filesystem.lower() == 'zfs':
                 subprocess.call(['zfs', 'destroy',
