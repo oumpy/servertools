@@ -103,21 +103,44 @@ if __name__ == '__main__':
     ssformat = '%Y-%m%d-%H%M' + args.suffix
 
     # make new snapshot for current status of the volume
+    latest_name = 'latest'
     newss = datetime.datetime.now().strftime(ssformat)
     if args.filesystem.lower() == 'btrfs':
         newss_path = os.path.join(args.ssdir, newss)
+        latest_path = os.path.join(args.ssdir, latest_name)
         subprocess.call(
             ['btrfs', 'subvolume', 'snapshot',
             args.origvol, newss_path,
             ])
+        if os.path.isdir(latest_path):
+            subprocess.call(
+                ['btrfs', 'subvolume', 'delete',
+                latest_path,
+                ])
+        subprocess.call('sync')
+        subprocess.call(
+            ['btrfs', 'subvolume', 'snapshot',
+            newss_path, latest_path,
+            ])
+
     elif args.filesystem.lower() == 'zfs':
         if not args.zfs:
             args.zfs = os.path.join(os.getcwd(), args.origvol).strip('/')
         if not args.ssdir:
             args.ssdir = os.path.join(args.origvol, '.zfs/snapshot/')
+        if os.path.isdir(os.path.join(args.ssdir, latest_name)):
+            subprocess.call(
+                ['zfs', 'destroy',
+                 '{}@{}'.format(args.zfs, latest_name),
+                ])
+        subprocess.call('sync')
         subprocess.call(
             ['zfs', 'snapshot',
              '{}@{}'.format(args.zfs, newss),
+            ])
+        subprocess.call(
+            ['zfs', 'snapshot',
+             '{}@{}'.format(args.zfs, latest_name),
             ])
 
     # execute postss script (if specified)
