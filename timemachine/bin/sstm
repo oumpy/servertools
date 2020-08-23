@@ -86,6 +86,12 @@ if __name__ == '__main__':
         action='store_true',
         help='destroy associating qgroup at the same time as the snapshot. (Quota should be enabled.)',
     )
+    parser.add_argument(
+        '-l',
+        '--latest',
+        action='store_true',
+        help='make a snapshot named \'latest\' in the snapshots directory.',
+    )
     args = parser.parse_args()
 
     # read setting file
@@ -117,11 +123,12 @@ if __name__ == '__main__':
                 ['btrfs', 'subvolume', 'delete',
                 latest_path,
                 ])
-        subprocess.call('sync')
-        subprocess.call(
-            ['btrfs', 'subvolume', 'snapshot',
-            newss_path, latest_path,
-            ])
+        if args.latest:
+            subprocess.call('sync')
+            subprocess.call(
+                ['btrfs', 'subvolume', 'snapshot',
+                newss_path, latest_path,
+                ])
 
     elif args.filesystem.lower() == 'zfs':
         if not args.zfs:
@@ -133,15 +140,16 @@ if __name__ == '__main__':
                 ['zfs', 'destroy',
                  '{}@{}'.format(args.zfs, latest_name),
                 ])
-        subprocess.call('sync')
         subprocess.call(
             ['zfs', 'snapshot',
              '{}@{}'.format(args.zfs, newss),
             ])
-        subprocess.call(
-            ['zfs', 'snapshot',
-             '{}@{}'.format(args.zfs, latest_name),
-            ])
+        if args.latest:
+            subprocess.call('sync')
+            subprocess.call(
+                ['zfs', 'snapshot',
+                '{}@{}'.format(args.zfs, latest_name),
+                ])
 
     # execute postss script (if specified)
     if args.postss:
