@@ -107,10 +107,8 @@ if __name__ == '__main__':
     today_id = (today-ADfirst).days
     history_file_path = history_file_path_format % today_id
 
-    if args.list:
-        args.reminder = False
-    elif os.path.exists(history_file_path):
-        args.reminder = True
+    if (not args.list) and os.path.exists(history_file_path):
+        exit()
     if args.list:
         for k, v in post_format_list.items():
             post_format[k] = v
