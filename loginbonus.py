@@ -128,24 +128,6 @@ if __name__ == '__main__':
     for k, v in post_format.items():
         globals()[k] = v
 
-    # read the previous record
-    recent_writers = []
-    lastweek_id = 0
-    for i in range(-lookback_weeks, 1):
-        past_id = week_id + i
-        hf = history_file_path_format % past_id
-        if os.path.exists(hf):
-            lastweek_id = past_id
-            with open(hf, 'r') as f:
-                lines = f.readlines()
-                for line in lines:
-                    date, person = line.rstrip().split()[:2]
-                    recent_writers.append(person)
-    if recent_writers:
-        last_writer = recent_writers[-1]
-    else:
-        last_writer = ''
-
     if args.slacktoken:
         token = args.slacktoken
     else:
