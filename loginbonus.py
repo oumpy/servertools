@@ -78,8 +78,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--noslack', help='do not post to slack.',
                         action='store_true')
-    parser.add_argument('-r', '--reminder', help='remind.',
-                        action='store_true')
     parser.add_argument('--mute', help='post in thread without showing on channel.',
                         action='store_true')
     parser.add_argument('--solopost',
@@ -118,11 +116,7 @@ if __name__ == '__main__':
         args.reminder = False
     elif os.path.exists(history_file_path):
         args.reminder = True
-    if args.reminder:
-        #update_link = False
-        for k, v in post_format_reminder.items():
-            post_format[k] = v
-    elif args.list:
+    if args.list:
         for k, v in post_format_list.items():
             post_format[k] = v
     for k, v in post_format.items():
@@ -138,46 +132,29 @@ if __name__ == '__main__':
     my_id = web_client.api_call('auth.test')['user_id']
 
     writers_dict = dict()
-    if args.reminder:
-        while week_id >= thisweek_id:
-            hf = history_file_path_format % week_id
-            if os.path.exists(hf):
-                with open(hf, 'r') as f:
-                    lines = f.readlines()
-                    for line in lines:
-                        date, person = line.rstrip().split()[:2]
-                        date = int(date)
-                        writers_dict[date-date_id] = person
-                break
-            else:
-                week_id -= 1
-                date_id -= 7
-        else:
-            exit()
+    if os.path.exists(excluded_members_file_path):
+        with open(excluded_members_file_path, 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                excluded_members.add(line.rstrip().split()[1])
+    channel_info = web_client.api_call('channels.info', params={'channel':channel_id})['channel']
+    # ensure I am a member of the channel.
+    # if not channel_info['is_member']:
+    #     return
+    members = set(channel_info['members']) - excluded_members
+    members.discard(my_id)
+    if args.list:
+        for d, writer in enumerate(next_writers(members, len(members), last_writer)):
+            writers_dict[d] = writer
     else:
-        if os.path.exists(excluded_members_file_path):
-            with open(excluded_members_file_path, 'r') as f:
-                lines = f.readlines()
-                for line in lines:
-                    excluded_members.add(line.rstrip().split()[1])
-        channel_info = web_client.api_call('channels.info', params={'channel':channel_id})['channel']
-        # ensure I am a member of the channel.
-        # if not channel_info['is_member']:
-        #     return
-        members = set(channel_info['members']) - excluded_members
-        members.discard(my_id)
-        if args.list:
-            for d, writer in enumerate(next_writers(members, len(members), last_writer)):
-                writers_dict[d] = writer
-        else:
-            writers = next_writers(members, len(relaydays), last_writer)
-            lastwriter = writers[-1]
-            for i, d in enumerate(relaydays):
-                writers_dict[d] = writers[i]
-            # write the new history
-            with open(history_file_path, 'w') as f:
-                for d, u in writers_dict.items():
-                    print(date_id + d, u, file=f)
+        writers = next_writers(members, len(relaydays), last_writer)
+        lastwriter = writers[-1]
+        for i, d in enumerate(relaydays):
+            writers_dict[d] = writers[i]
+        # write the new history
+        with open(history_file_path, 'w') as f:
+            for d, u in writers_dict.items():
+                print(date_id + d, u, file=f)
 
     if args.list: week_id = max(week_id, lastweek_id + 1)
     post_lines = [post_header_format % week_str[week_id - thisweek_id]]
