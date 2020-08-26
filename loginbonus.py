@@ -34,8 +34,8 @@ post_format = {
     'post_footer' : '\n以上の方にログインボーナスが付与されます。\nおめでとうございます！ :sparkles:',
 }
 post_format_list = {
-    'post_header_format' : '＊【リレー投稿 %s以降の順番予定】＊',
-    'post_line_format' : '<@%s> さん', # month, day, weekday, writer
+    'post_header_format' : '＊【現在の利用者一覧】＊',
+    'post_footer' : '以上、%d名です。 :sparkles:',
 }
 
 def get_channel_list(client, limit=200):
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     parser.add_argument('--solopost',
                         help='post an idependent message out of the thread, not destroying previous thread info',
                         action='store_true')
-    parser.add_argument('--list', help='list the future orders.',
+    parser.add_argument('--list', help='list all the members.',
                         action='store_true')
     parser.add_argument('-c', '--channel', default=channel_name,
                         help='slack channel to read & post.')
