@@ -11,41 +11,27 @@ from bisect import bisect_right
 import hashlib
  
 # Example:
-# python relayscheduler.py
+# python loginbonus.py
 #
 
 post_to_slack = True
 # update_link = True
 slacktoken_file = 'slack_token'
 
-lookback_weeks = 8
-min_grace = 3 # days: 4の場合、木曜までなら翌週月曜から、それ以後なら翌々週。
-relaydays = [0, 1, 2, 3, 4] # cronとは曜日番号が違うので注意。
-# 平日に投稿、水曜に発表、月曜にリマインド、を想定。
-
-weekdays = ['月', '火', '水', '木', '金', '土', '日']
-year_first_day =  104 # 1月4日から
-year_last_day = 1223 # 12月23日まで
-
 excluded_members = set()
 
-channel_name = 'リレー投稿'
-appdir = '/var/relaytools/'
+channel_name = 'bot'
+appdir = '/var/loginbonus/'
 base_dir = os.environ['HOME'] + appdir
 history_dir = base_dir + 'history/'
-#memberlist_file = 'memberlist.txt'
-ts_file = 'ts-relay'
-history_file_format = 'week-%d.txt' # week ID.
+history_file_format = '%d.txt' # date
+ts_file = 'ts-loginbonus'
 excluded_members_file = 'excluded_members.txt'
-week_str = ['今週', '来週', '再来週']
 post_format = {
-    'post_header_format' : '＊【%sのリレー投稿 担当者のお知らせ】＊',
-    'post_line_format' : '%d月%d日(%s)：<@%s> さん', # month, day, weekday, writer
-    'post_nobody' : '執筆予定者はいません。',
-    'post_footer' : '\nよろしくお願いします！ :sparkles:', # winner
-}
-post_format_reminder = {
-    'post_header_format' : '*【%sのリレー投稿 リマインダ】*',
+    'post_header_format' : '＊【%sのログインボーナス】＊',
+    'post_line_format' : '<@%s> さん', # member
+    'post_nobody' : 'ログインした人はいません。',
+    'post_footer' : '\n以上の方にログインボーナスが付与されます。\nおめでとうございます！ :sparkles:',
 }
 post_format_list = {
     'post_header_format' : '＊【リレー投稿 %s以降の順番予定】＊',
