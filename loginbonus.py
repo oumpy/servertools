@@ -138,40 +138,31 @@ if __name__ == '__main__':
     channel_id = get_channel_id(web_client, channel_name)
     my_id = web_client.api_call('auth.test')['user_id']
 
-    writers_dict = dict()
+    logins = set()
     if os.path.exists(excluded_members_file_path):
         with open(excluded_members_file_path, 'r') as f:
             lines = f.readlines()
             for line in lines:
                 excluded_members.add(line.rstrip().split()[1])
-    channel_info = web_client.api_call('channels.info', params={'channel':channel_id})['channel']
-    # ensure I am a member of the channel.
-    # if not channel_info['is_member']:
-    #     return
-    members = set(channel_info['members']) - excluded_members
+    members_info = web_client.api_call('users.list')['members']
+    name = dict()
+    for member in members_info:
+        name[member['id']] = member['profile']['display_name']
+    members = set([ member['id'] for member in members_info]) - excluded_members
     members.discard(my_id)
     if args.list:
-        for d, writer in enumerate(next_writers(members, len(members), last_writer)):
-            writers_dict[d] = writer
+        logins = set(members)
     else:
-        writers = next_writers(members, len(relaydays), last_writer)
-        lastwriter = writers[-1]
-        for i, d in enumerate(relaydays):
-            writers_dict[d] = writers[i]
+        logins = login_members(members, name, today)
         # write the new history
         with open(history_file_path, 'w') as f:
-            for d, u in writers_dict.items():
-                print(date_id + d, u, file=f)
+            for m in logins:
+                print(m, file=f)
 
-    if args.list: week_id = max(week_id, lastweek_id + 1)
-    post_lines = [post_header_format % week_str[week_id - thisweek_id]]
-    if writers_dict:
-        for d, writer in writers_dict.items():
-            if args.list:
-                post_lines.append(post_line_format % writer)
-            else:
-                date = startday + timedelta(d)
-                post_lines.append(post_line_format % (date.month, date.day, weekdays[d], writer))
+    post_lines = [post_header_format % '{}月{}日'.format(today.month, today.day)]
+    if logins:
+        for m in logins:
+            post_lines.append(m)        
         post_lines.append(
             post_footer
         )
