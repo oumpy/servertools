@@ -12,7 +12,6 @@ import re
 #
 
 post_to_slack = True
-# update_link = True
 slacktoken_file = 'slack_token'
 
 excluded_members = set()
@@ -106,7 +105,6 @@ if __name__ == '__main__':
         post_to_slack = False
     channel_name = args.channel
 
-    # memberlist_file_path = base_dir + memberlist_file
     slacktoken_file_path = base_dir + slacktoken_file
     history_file_path_format = history_dir + history_file_format
     excluded_members_file_path = base_dir + excluded_members_file
@@ -194,5 +192,3 @@ if __name__ == '__main__':
             ts = posted_data['ts']
             with open(ts_file, 'w') as f:
                 print(ts, file=f)
-        # elif os.path.isfile(ts_file):
-        #     os.remove(ts_file)
