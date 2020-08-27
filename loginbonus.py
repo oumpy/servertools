@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import requests
-from collections import defaultdict
 import os
 from datetime import date, timedelta
 from slack import WebClient
 import argparse
-# from random import randrange
-from bisect import bisect_right
-import hashlib
 import subprocess
 import re
 
