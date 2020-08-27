@@ -20,7 +20,7 @@ slacktoken_file = 'slack_token'
 
 excluded_members = set()
 
-channel_name = 'bot'
+channel_name = '自動アナウンス'
 appdir = '/var/loginbonus/'
 base_dir = os.environ['HOME'] + appdir
 history_dir = base_dir + 'history/'
