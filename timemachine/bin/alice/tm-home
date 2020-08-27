@@ -1,5 +1,5 @@
 #!/bin/bash
-sstm -c /usr/local/etc/sstm/home_original.yaml /home /mnt/admin/timemachine/private/original-disk/home/snapshots
+sstm --latest -c /usr/local/etc/sstm/home_original.yaml /home /mnt/admin/timemachine/private/original-disk/home/snapshots
 sync
 backup_home /usr/local/etc/sstm/backup_home.conf --inplace --delete-excluded -aAXH --max-size=100M /mnt/admin/timemachine/private/original-disk/home/snapshots/latest/ /mnt/admin/timemachine/private/original-disk/home/backup/original/
 senddiff /mnt/admin/timemachine/private/original-disk/home/backup /mnt/admin/timemachine/private/backup-disk/home/backup

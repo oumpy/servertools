@@ -1,5 +1,5 @@
 #!/bin/bash
-sstm -c /usr/local/etc/sstm/system_original.yaml / /mnt/admin/timemachine/private/original-disk/system/snapshots
+sstm --latest -c /usr/local/etc/sstm/system_original.yaml / /mnt/admin/timemachine/private/original-disk/system/snapshots
 sync
 midvol="/mnt/admin/timemachine/private/original-disk/system/backup/original"
 if [ -d $midvol ]; then
