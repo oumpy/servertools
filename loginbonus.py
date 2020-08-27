@@ -155,7 +155,7 @@ if __name__ == '__main__':
     post_lines = [post_header_format % '{}月{}日'.format(today.month, today.day)]
     if logins:
         for m in logins:
-            post_lines.append(m)        
+            post_lines.append(post_line_format % m)
         post_lines.append(
             post_footer
         )
