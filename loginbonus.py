@@ -99,6 +99,8 @@ if __name__ == '__main__':
                         help='slack channel to post.')
     parser.add_argument('--slacktoken', default=None,
                         help='slack bot token.')
+    parser.add_argument('--oncemore', action='store_true',
+                        help='execute even if it has been already done for the day.')
     args = parser.parse_args()
 
     if args.noslack:
@@ -114,7 +116,7 @@ if __name__ == '__main__':
     today_id = (today-ADfirst).days
     history_file_path = history_file_path_format % today_id
 
-    if (not args.list) and os.path.exists(history_file_path):
+    if (not args.list) and (not args.oncemore) and os.path.exists(history_file_path):
         exit()
     if args.list:
         for k, v in post_format_list.items():
