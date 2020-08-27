@@ -9,7 +9,9 @@ import argparse
 # from random import randrange
 from bisect import bisect_right
 import hashlib
- 
+import subprocess
+import re
+
 # Example:
 # python loginbonus.py
 #
@@ -38,6 +40,8 @@ post_format_list = {
     'post_footer' : '以上、%d名です。 :sparkles:',
 }
 
+loginname_format = re.compile(r'u[0-9]{6}[a-z]')
+
 def get_channel_list(client, limit=200):
     params = {
         'exclude_archived': 'true',
@@ -63,15 +67,25 @@ def get_channel_id(client, channel_name):
     else:
         return target['id']
 
-def next_writers(members, n, lastwriter):
-    def hashf(key):
-        return hashlib.sha256(key.encode()).hexdigest()
-    hashed_members = [ (hashf(m),m) for m in members ]
-    hashed_members.sort()
-    N = len(members)
-    hashed_lastwriter = (hashf(lastwriter), lastwriter)
-    s = bisect_right(hashed_members, hashed_lastwriter)
-    return [ hashed_members[(s+i) % N][1] for i in range(n) ]
+def login_members(members, name, day):
+    daystr = day.strftime('%Y%m%d')
+    since = daystr + '000000'
+    till = daystr + '235959'
+    last_out = subprocess.run(
+                    ['last', '-s', since, '-t', till],
+                    encoding='utf-8', stdout=subprocess.PIPE,
+                    ).stdout.splitlines()[:-2]
+    logins = { line.split()[0] for line in last_out }
+    ret = set()
+    for m in members:
+        m_name = name[m].strip()
+        if not m_name:
+            continue
+        m_loginname = m_name.split('_')[-1]
+        if loginname_format.fullmatch(m_loginname) and m_loginname in logins:
+            ret.add(m)
+
+    return ret
 
 
 if __name__ == '__main__':
