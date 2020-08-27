@@ -170,7 +170,10 @@ if __name__ == '__main__':
         post_lines.append(post_nobody)
     message = '\n'.join(post_lines)
 
-    if post_to_slack:
+    if not post_to_slack:
+        print('App ID:', my_id)
+        print(message)
+    elif len(post_lines) > 2:
         if args.outchannel:
             channel_id = get_channel_id(web_client, args.outchannel)
         params={
@@ -198,6 +201,3 @@ if __name__ == '__main__':
                 print(ts, file=f)
         # elif os.path.isfile(ts_file):
         #     os.remove(ts_file)
-    else:
-        print('App ID:', my_id)
-        print(message)
