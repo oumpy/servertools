@@ -77,7 +77,12 @@ def login_members(members, name, day):
             continue
         m_loginname = m_name.split('_')[-1]
         if loginname_format.fullmatch(m_loginname) and m_loginname in logins:
-            ret.add(m)
+            groups = subprocess.run(
+                    ['groups', m_loginname],
+                    encoding='utf-8', stdout=subprocess.PIPE,
+                    ).stdout.split()[2:]
+            if 'users' in groups:
+                ret.add(m)
 
     return ret
 
