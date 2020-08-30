@@ -106,6 +106,8 @@ if __name__ == '__main__':
                         help='slack bot token.')
     parser.add_argument('--oncemore', action='store_true',
                         help='execute even if it has been already done for the day.')
+    parser.add_argument('--day', default=None,
+                        help='specify a day in %Y%m%d format.')
     args = parser.parse_args()
 
     if args.noslack:
@@ -116,7 +118,13 @@ if __name__ == '__main__':
     history_file_path_format = history_dir + history_file_format
     excluded_members_file_path = base_dir + excluded_members_file
 
-    today = date.today() - timedelta(days=1) # actually yesterday
+    if args.day and isinstance(args.day,str) and len(args.day)>=8:
+        year = int(args.day[:4])
+        month = int(args.day[4:6])
+        day = int(args.day[6:8])
+        today = date(year, month, day)
+    else:
+        today = date.today() - timedelta(days=1) # actually yesterday
     ADfirst = date(1,1,1) # AD1.1.1 is Monday
     today_id = (today-ADfirst).days
     history_file_path = history_file_path_format % today_id
