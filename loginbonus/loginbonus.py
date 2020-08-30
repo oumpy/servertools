@@ -155,7 +155,12 @@ if __name__ == '__main__':
     members_info = web_client.api_call('users.list')['members']
     name = dict()
     for member in members_info:
-        name[member['id']] = member['profile']['display_name']
+        display_name = member['profile']['display_name']
+        real_name = member['profile']['real_name']
+        if display_name:
+            name[member['id']] = display_name
+        else:
+            name[member['id']] = real_name
     members = set([ member['id'] for member in members_info]) - excluded_members
     members.discard(my_id)
     if args.list:
