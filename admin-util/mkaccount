@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+
+import argparse
+import sys
+import subprocess
+
+user_groups = ['users', 'cdrom', 'plugdev']
+advisor_groups = ['advisor', 'cdrom', 'plugdev']
+oumpy_groups = ['oumpy']
+etcgroup = '/etc/group'
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'accountname',
+        help='account name for the user.',
+    )
+    parser.add_argument(
+        '--advisor',
+        action='store_true',
+        help='make an advisor account, instead of a user.',
+    )
+    parser.add_argument(
+        '--aG',
+        default='',
+        help='groups to add, separated by comma.',
+    )
+    parser.add_argument(
+        '--oumpy',
+        action='store_true',
+        help='add group oumpy. set this for oumpy member.',
+    )
+    parser.add_argument(
+        '--name',
+        default=None,
+        help='real name of the user. (family-name) (given-name).',
+    )
+    parser.add_argument(
+        '--gradyear',
+        type=int,
+        default=0,
+        help='the scheduled grad-year of the user.',
+    )
+    parser.add_argument(
+        '--studentid',
+        default=None,
+        help='student ID number of the user.',
+    )
+    parser.add_argument(
+        '--key',
+        default=None,
+        help='SSH public key.',
+    )
+    args = parser.parse_args()
+
+if args.advisor:
+    groups = advisor_groups
+else:
+    groups = user_groups
+if args.oumpy:
+    groups += oumpy_groups
+groups += list(filter(lambda x: x, map(lambda x: x.strip(), args.aG.split(','))))
+
+with open(etcgroup) as gf :
+    all_groups = set(map(lambda x: x.split(':')[0], gf.readlines()))
+
+error=False
+for g in groups:
+    if not g in all_groups:
+        print('Error: group `{}` does not exist in this system.'.format(g), file=sys.stderr)
+        error=True
+else:
+    if error:
+        exit()
+
+if not args.name:
+    print('Real name of the user, e.g., Handai Brian-Taro:', end=' ')
+    args.name = input()
+args.name = ' '.join(args.name.split()[:2])
+
+if not args.gradyear:
+    print('Scheduled grad-year, e.g., 2026:', end=' ')
+    args.gradyear = int(input())
+
+if not args.studentid:
+    print('Student ID number, e.g., 05A20123:', end=' ')
+    args.studentid = input().strip()
+
+subprocess.call([
+        'adduser',
+        '-q',
+        '--gecos', '{},{},{}'.format(args.name, args.gradyear, args.studentid),
+        '--disabled-login',
+        args.accountname,
+    ])
+print('User {0} and group {0} created.'.format(args.accountname), file=sys.stdout)
+
+subprocess.call([
+        'usermod',
+        '-aG', ','.join(groups),
+        args.accountname,
+    ])
+print('User {} added to the groups {}.'.format(args.accountname, '{'+', '.join(groups)+'}'), file=sys.stdout)
+
+if not args.key:
+    print("Paste SSH public key for the new user. If nothing, just press enter:", end=' ')
+    args.key = input().strip()
+    if not args.key:
+        exit()
+subprocess.call([
+        'setpublickey',
+        args.accountname,
+        args.key,
+    ])
+print('SSH public key added to user {}.'.format(args.accountname), file=sys.stdout)
