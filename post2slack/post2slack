@@ -55,6 +55,8 @@ if __name__ == '__main__':
     slacktoken_file_path = os.path.join(base_dir, slacktoken_file)
 
     message = ''.join(sys.stdin.readlines()).strip()
+    if not message:
+        exit()
 
     if args.slacktoken:
         token = args.slacktoken
@@ -66,8 +68,8 @@ if __name__ == '__main__':
             token = f.readline().rstrip()
     web_client = WebClient(token=token)
     channel_id = get_channel_id(web_client, channel_name)
-    if args.outchannel:
-        channel_id = get_channel_id(web_client, args.outchannel)
+    if args.channel:
+        channel_id = get_channel_id(web_client, args.channel)
     params={
         'channel': channel_id,
         'text': message,
