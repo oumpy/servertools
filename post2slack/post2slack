@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import os, sys
+from slack import WebClient
+import argparse
+
+# Example:
+# $ hogehoge | post2slack
+#
+
+slacktoken_file = 'slack_token'
+channel_name = 'random'
+base_dir = os.path.join(os.environ['HOME'], 'etc')
+
+def get_channel_list(client, limit=200):
+    params = {
+        'exclude_archived': 'true',
+        'types': 'public_channel',
+        'limit': str(limit),
+        }
+    channels = client.api_call('conversations.list', params=params)
+    if channels['ok']:
+        return channels['channels']
+    else:
+        return None
+
+def get_channel_id(client, channel_name):
+    channels = filter(lambda x: x['name']==channel_name , get_channel_list(client))
+    target = None
+    for c in channels:
+        if target is not None:
+            break
+        else:
+            target = c
+    if target is None:
+        return None
+    else:
+        return target['id']
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--channel', default=channel_name,
+                        help='slack channel to post.')
+    parser.add_argument('--slacktoken', default=None,
+                        help='slack bot token.')
+    parser.add_argument('--slacktokenfile', default=None,
+                        help='file including slack bot token.')
+    parser.add_argument('--ts', default=None,
+                        help='specify the thread ts.')
+    parser.add_argument('--mute', help='post in thread without showing on channel.',
+                        action='store_true')
+    args = parser.parse_args()
+    channel_name = args.channel
+    slacktoken_file_path = os.path.join(base_dir, slacktoken_file)
+
+    message = ''.join(sys.stdin.readlines()).strip()
+
+    if args.slacktoken:
+        token = args.slacktoken
+    elif args.slacktokenfile:
+        with open(args.slacktokenfile, 'r') as f:
+            token = f.readline().rstrip()
+    else:
+        with open(slacktoken_file_path, 'r') as f:
+            token = f.readline().rstrip()
+    web_client = WebClient(token=token)
+    channel_id = get_channel_id(web_client, channel_name)
+    if args.outchannel:
+        channel_id = get_channel_id(web_client, args.outchannel)
+    params={
+        'channel': channel_id,
+        'text': message,
+    }
+    if args.ts:
+        ts = args.ts
+        params['thread_ts'] = ts
+        if not args.mute:
+            params['reply_broadcast'] = 'True'
+
+    response = web_client.api_call(
+        'chat.postMessage',
+        params=params
+    )
