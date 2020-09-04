@@ -55,6 +55,8 @@ if __name__ == '__main__':
     slacktoken_file_path = os.path.join(base_dir, slacktoken_file)
 
     message = ''.join(sys.stdin.readlines()).strip()
+    if not message:
+        exit()
 
     if args.slacktoken:
         token = args.slacktoken
