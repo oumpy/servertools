@@ -4,6 +4,16 @@ import argparse
 import sys
 import subprocess
 
+def ask(message, default=True):
+    while True:
+        choice = input(message + ' [{}]: '.format(('y/N','Y/n')[default])).lower().strip()
+        if not choice:
+            return default
+        elif choice in ['y', 'ye', 'yes']:
+            return True
+        elif choice in ['n', 'no']:
+            return False
+
 user_groups = ['users', 'cdrom', 'plugdev']
 advisor_groups = ['advisor', 'cdrom', 'plugdev']
 oumpy_groups = ['oumpy']
@@ -19,11 +29,6 @@ if __name__ == '__main__':
         '--advisor',
         action='store_true',
         help='make an advisor account, instead of a user.',
-    )
-    parser.add_argument(
-        '--aG',
-        default='',
-        help='groups to add, separated by comma.',
     )
     parser.add_argument(
         '--oumpy',
@@ -53,63 +58,62 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-if args.advisor:
-    groups = advisor_groups
-else:
-    groups = user_groups
-if args.oumpy:
-    groups += oumpy_groups
-groups += list(filter(lambda x: x, map(lambda x: x.strip(), args.aG.split(','))))
+    if args.advisor:
+        groups = advisor_groups
+    else:
+        groups = user_groups
+    if args.oumpy or ask('OUMPY member?', default=False):
+        groups += oumpy_groups
 
-with open(etcgroup) as gf :
-    all_groups = set(map(lambda x: x.split(':')[0], gf.readlines()))
+    with open(etcgroup) as gf :
+        all_groups = set(map(lambda x: x.split(':')[0], gf.readlines()))
 
-error=False
-for g in groups:
-    if not g in all_groups:
-        print('Error: group `{}` does not exist in this system.'.format(g), file=sys.stderr)
-        error=True
-else:
-    if error:
-        exit()
+    error=False
+    for g in groups:
+        if not g in all_groups:
+            print('Error: group `{}` does not exist in this system.'.format(g), file=sys.stderr)
+            error=True
+    else:
+        if error:
+            exit()
 
-if not args.name:
-    print('Real name of the user, e.g., Handai Brian-Taro:', end=' ')
-    args.name = input()
-args.name = ' '.join(args.name.split()[:2])
+    if not args.name:
+        print('Real name of the user, e.g., Handai Brian-Taro:', end=' ')
+        args.name = input()
+    args.name = ' '.join(args.name.split()[:2])
 
-if not args.gradyear:
-    print('Scheduled grad-year, e.g., 2026:', end=' ')
-    args.gradyear = int(input())
+    if not args.gradyear:
+        print('Scheduled grad-year, e.g., 2026:', end=' ')
+        args.gradyear = int(input())
 
-if not args.studentid:
-    print('Student ID number, e.g., 05A20123:', end=' ')
-    args.studentid = input().strip()
+    if not args.studentid:
+        print('Student ID number, e.g., 05A20123:', end=' ')
+        args.studentid = input().strip()
 
-subprocess.call([
-        'adduser',
-        '-q',
-        '--gecos', '{},{},{}'.format(args.name, args.gradyear, args.studentid),
-        '--disabled-login',
-        args.accountname,
-    ])
-print('User {0} and group {0} created.'.format(args.accountname), file=sys.stdout)
+    subprocess.call([
+            'adduser',
+            '-q',
+            '--gecos', '{},{},{}'.format(args.name, args.gradyear, args.studentid),
+            '--disabled-login',
+            args.accountname,
+        ])
+    print('User {0} and group {0} created.'.format(args.accountname), file=sys.stdout)
 
-subprocess.call([
-        'usermod',
-        '-aG', ','.join(groups),
-        args.accountname,
-    ])
-print('User {} added to the groups {}.'.format(args.accountname, '{'+', '.join(groups)+'}'), file=sys.stdout)
+    subprocess.call([
+            'usermod',
+            '-aG', ','.join(groups),
+            args.accountname,
+        ])
+    print('User {} added to the groups {}.'.format(args.accountname, '{'+', '.join(groups)+'}'), file=sys.stdout)
 
-if not args.key:
-    print("Paste SSH public key for the new user. If nothing, just press enter:", end=' ')
-    args.key = input().strip()
     if not args.key:
-        exit()
-subprocess.call([
-        'setpublickey',
-        args.accountname,
-        args.key,
-    ])
-print('SSH public key added to user {}.'.format(args.accountname), file=sys.stdout)
+        print("Paste SSH public key for the new user. If nothing, just press enter:", end=' ')
+        args.key = input().strip()
+        if not args.key:
+            exit()
+    subprocess.call([
+            'setpublickey',
+            args.accountname,
+            args.key,
+        ])
+    print('SSH public key added to user {}.'.format(args.accountname), file=sys.stdout)
