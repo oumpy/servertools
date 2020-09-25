@@ -4,6 +4,16 @@ import argparse
 import sys
 import subprocess
 
+def ask(message, default=True):
+    while True:
+        choice = input(message + ' [{}]: '.format(('y/N','Y/n')[default])).lower().strip()
+        if not choice:
+            return default
+        elif choice in ['y', 'ye', 'yes']:
+            return True
+        elif choice in ['n', 'no']:
+            return False
+
 user_groups = ['users', 'cdrom', 'plugdev']
 advisor_groups = ['advisor', 'cdrom', 'plugdev']
 oumpy_groups = ['oumpy']
@@ -52,7 +62,7 @@ if __name__ == '__main__':
         groups = advisor_groups
     else:
         groups = user_groups
-    if args.oumpy:
+    if args.oumpy or ask('OUMPY member?', default=False):
         groups += oumpy_groups
 
     with open(etcgroup) as gf :
