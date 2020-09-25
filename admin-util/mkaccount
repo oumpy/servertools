@@ -21,11 +21,6 @@ if __name__ == '__main__':
         help='make an advisor account, instead of a user.',
     )
     parser.add_argument(
-        '--aG',
-        default='',
-        help='groups to add, separated by comma.',
-    )
-    parser.add_argument(
         '--oumpy',
         action='store_true',
         help='add group oumpy. set this for oumpy member.',
@@ -59,7 +54,6 @@ else:
     groups = user_groups
 if args.oumpy:
     groups += oumpy_groups
-groups += list(filter(lambda x: x, map(lambda x: x.strip(), args.aG.split(','))))
 
 with open(etcgroup) as gf :
     all_groups = set(map(lambda x: x.split(':')[0], gf.readlines()))
