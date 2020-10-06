@@ -76,8 +76,7 @@ if __name__ == '__main__':
         'text': message,
     }
     if args.ts:
-        ts = args.ts
-        params['thread_ts'] = ts
+        params['thread_ts'] = args.ts
         if not args.mute:
             params['reply_broadcast'] = 'True'
 
