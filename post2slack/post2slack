@@ -3,6 +3,7 @@
 import os, sys
 from slack import WebClient
 import argparse
+import re
 
 # Example:
 # $ hogehoge | post2slack
@@ -50,12 +51,14 @@ if __name__ == '__main__':
                         help='specify the thread ts.')
     parser.add_argument('--mute', help='post in thread without showing on channel.',
                         action='store_true')
+    parser.add_argument('--separator', default=None,
+                        help='split posts by lines beginning with the specified separator (regex available).')
     args = parser.parse_args()
     channel_name = args.channel
     slacktoken_file_path = os.path.join(base_dir, slacktoken_file)
 
-    message = ''.join(sys.stdin.readlines()).strip()
-    if not message:
+    message_lines = sys.stdin.readlines()
+    if not ''.join(message_lines).strip():
         exit()
 
     if args.slacktoken:
@@ -71,16 +74,29 @@ if __name__ == '__main__':
         channel_id = get_channel_id(web_client, args.channel)
     else:
         channel_id = get_channel_id(web_client, channel_name)
+
     params={
         'channel': channel_id,
-        'text': message,
     }
     if args.ts:
         params['thread_ts'] = args.ts
         if not args.mute:
             params['reply_broadcast'] = 'True'
 
-    response = web_client.api_call(
-        'chat.postMessage',
-        params=params
-    )
+    message_lines.append(args.separator)
+    submessage_lines = []
+    for line in message_lines:
+        if not (line == args.separator or re.match(args.separator, line)):
+            submessage_lines.append(line)
+            continue
+
+        submessage = ''.join(submessage_lines).rstrip('\n')
+        submessage_lines = []
+        if not submessage.strip():
+            continue
+
+        params['text'] = submessage
+        response = web_client.api_call(
+            'chat.postMessage',
+            params=params
+        )
