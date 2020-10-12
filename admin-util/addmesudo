@@ -1,2 +1,2 @@
 #!/bin/sh
-adduser `whoami` sudo
+adduser $SUDO_USER sudo
