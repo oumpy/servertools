@@ -1,0 +1,15 @@
+#!/bin/sh
+echo "You are now demanding FULL POWERS for an EMERGENCY!!!"
+echo "Whenever possible, you MUST consult the acting administrator."
+echo
+echo -n "Do you understand everything and really go ahead?? [y/N]: "
+read ANS
+
+case $ANS in
+  [Yy]* )
+    adduser $SUDO_USER sudo
+    ;;
+  * )
+    echo "Aborted."
+    ;;
+esac
