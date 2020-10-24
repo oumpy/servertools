@@ -132,8 +132,7 @@ if __name__ == '__main__':
     if (not args.list) and (not args.oncemore) and os.path.exists(history_file_path):
         exit()
     if args.list:
-        for k, v in post_format_list.items():
-            post_format[k] = v
+        post_format.update(post_format_list)
     for k, v in post_format.items():
         globals()[k] = v
 
