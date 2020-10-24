@@ -163,6 +163,7 @@ if __name__ == '__main__':
             name[member['id']] = real_name
     members = set([ member['id'] for member in members_info]) - excluded_members
     members.discard(my_id)
+    N_members = len(members)
     if args.list:
         logins = set(members)
     else:
@@ -177,7 +178,7 @@ if __name__ == '__main__':
         for m in logins:
             post_lines.append(post_line_format.format(m))
         post_lines.append(
-            post_footer
+            post_footer.format(N_members)
         )
     else:
         post_lines.append(post_nobody)
