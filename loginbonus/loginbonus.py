@@ -29,6 +29,7 @@ post_format = {
     'post_nobody' : 'ログインした人はいません。',
     'post_footer' : '\n以上の方にログインボーナスが付与されます。\nおめでとうございます！ :sparkles:',
 }
+N_ranking = 5
 post_format_ranking = {
     'post_header_format' : '＊【{}のログインボーナス ベスト{}】＊',
     'post_line_format' : '<@{}> さん', # member
