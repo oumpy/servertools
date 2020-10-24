@@ -119,6 +119,8 @@ if __name__ == '__main__':
                         help='execute even if it has been already done for the day.')
     parser.add_argument('--day', default=None,
                         help='specify a day in %Y%m%d format.')
+    parser.add_argument('--ranking', action='store_true',
+                        help='show monthly ranking.')
     args = parser.parse_args()
 
     if args.noslack:
@@ -175,15 +177,20 @@ if __name__ == '__main__':
     members.discard(my_id)
     N_members = len(members)
     if args.list:
+        header_data = (None,)
         logins = set(members)
+    elif args.ranking:
+        post_format.update(post_format_ranking)
+        pass
     else:
         logins = login_members(members, name, today)
         # write the new history
         with open(history_file_path, 'w') as f:
             for m in logins:
                 print(m, file=f)
+        header_data = ('{}月{}日'.format(today.month, today.day),)
 
-    post_lines = [post_header_format.format('{}月{}日'.format(today.month, today.day))]
+    post_lines = [post_header_format.format(*header_data)]
     if logins:
         for m in logins:
             post_lines.append(post_line_format.format(m))
