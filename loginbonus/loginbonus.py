@@ -6,6 +6,7 @@ from slack import WebClient
 import argparse
 import subprocess
 import re
+from collections import defaultdict
 
 # Example:
 # python loginbonus.py
@@ -97,6 +98,17 @@ def login_members(members, name, day):
 
     return ret
 
+def login_days(members, name, endofmonth):
+    year = endofmonth.year
+    month = endofmonth.month
+    days = endofmonth.day
+    scores = defaultdict(int)
+    for day in range(1,days+1):
+        for m in login_members(members, name, date(year,month,day)):
+            scores[m] += 1
+
+    return sorted(scores.items(), key=lambda x: -x[1])
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -142,10 +154,12 @@ if __name__ == '__main__':
     today_id = (today-ADfirst).days
     history_file_path = history_file_path_format.format(today_id)
 
-    if (not args.list) and (not args.oncemore) and os.path.exists(history_file_path):
+    if (not args.list and not args.ranking) and (not args.oncemore) and os.path.exists(history_file_path):
         exit()
     if args.list:
         post_format.update(post_format_list)
+    elif args.ranking:
+        post_format.update(post_format_ranking)
     for k, v in post_format.items():
         globals()[k] = v
 
@@ -180,8 +194,28 @@ if __name__ == '__main__':
         header_data = (None,)
         logins = set(members)
     elif args.ranking:
-        post_format.update(post_format_ranking)
-        pass
+        lastmonth = date(today.year, today.month, 1) + timedelta(days=-1)
+        prev_n, prev_s = -1, 50
+        ranking = login_days(members, name, lastmonth)
+        logins = []
+        for n, r in enumerate(ranking):
+            m, s = r
+            if s == prev_s:
+                if prev_n < len(rank_marks):
+                    mark = rank_marks[prev_n]
+                else:
+                    mark = other_mark
+                logins.append((prev_n+1, mark, m, s))
+            elif n < N_ranking:
+                if n < len(rank_marks):
+                    mark = rank_marks[n]
+                else:
+                    mark = other_mark
+                prev_n, prev_s = n, s
+                logins.append((n+1, mark, m, s))
+            else:
+                break
+        header_data = ('{}月'.format(lastmonth.month), N_ranking)
     else:
         logins = login_members(members, name, today)
         # write the new history
@@ -193,7 +227,10 @@ if __name__ == '__main__':
     post_lines = [post_header_format.format(*header_data)]
     if logins:
         for m in logins:
-            post_lines.append(post_line_format.format(m))
+            if isinstance(m, tuple):
+                post_lines.append(post_line_format.format(*m))
+            else:
+                post_lines.append(post_line_format.format(m))
         post_lines.append(
             post_footer.format(N_members)
         )
