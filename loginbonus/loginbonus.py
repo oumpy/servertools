@@ -198,6 +198,7 @@ if __name__ == '__main__':
         prev_n, prev_s = -1, 50
         ranking = login_days(members, name, lastmonth)
         logins = []
+        remain_str_list = []
         for n, r in enumerate(ranking):
             m, s = r
             if s == prev_s:
@@ -213,8 +214,12 @@ if __name__ == '__main__':
                     mark = other_mark
                 prev_n, prev_s = n, s
                 logins.append((n+1, mark, m, s))
+            elif s >= 2:
+                remain_str_list.append('<@{}>'.format(m))
             else:
                 break
+        if remain_str_list:
+            post_footer =  post_remain_format.format('、'.join(remain_str_list)) + '\n' + post_footer
         header_data = ('{}月'.format(lastmonth.month), N_ranking)
     else:
         logins = login_members(members, name, today)
