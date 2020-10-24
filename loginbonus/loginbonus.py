@@ -29,6 +29,16 @@ post_format = {
     'post_nobody' : 'ログインした人はいません。',
     'post_footer' : '\n以上の方にログインボーナスが付与されます。\nおめでとうございます！ :sparkles:',
 }
+post_format_ranking = {
+    'post_header_format' : '＊【{}のログインボーナス ベスト{}】＊',
+    'post_line_format' : '<@{}> さん', # member
+    'post_line_format' : '{}位：{}<@{}> さん ({}ポイント)', # rank, mark, slackid, point
+    'post_remain_format' : 'その他2ポイント以上：{}',
+    'rank_marks' : [':first_place_medal:',':second_place_medal:',':third_place_medal:'],
+    'other_mark' : ':sparkles:',
+    'post_nobody' : 'ログインした人はいませんでした :scream:',
+    'post_footer' : '\nおめでとうございます！ :tada:',
+}
 post_format_list = {
     'post_header_format' : '＊【現在の利用者一覧】＊',
     'post_footer' : '以上、{}名です。 :sparkles:',
