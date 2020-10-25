@@ -6,6 +6,7 @@ from slack import WebClient
 import argparse
 import subprocess
 import re
+from collections import defaultdict
 
 # Example:
 # python loginbonus.py
@@ -28,6 +29,17 @@ post_format = {
     'post_line_format' : '<@{}> さん', # member
     'post_nobody' : 'ログインした人はいません。',
     'post_footer' : '\n以上の方にログインボーナスが付与されます。\nおめでとうございます！ :sparkles:',
+}
+N_ranking = 5
+post_format_ranking = {
+    'post_header_format' : '＊【{}のログインボーナス ベスト{}】＊',
+    'post_line_format' : '<@{}> さん', # member
+    'post_line_format' : '{}位：{}<@{}> さん ({}ポイント)', # rank, mark, slackid, point
+    'post_remain_format' : 'その他2ポイント以上：{}',
+    'rank_marks' : [':first_place_medal:',':second_place_medal:',':third_place_medal:'],
+    'other_mark' : ':sparkles:',
+    'post_nobody' : 'ログインした人はいませんでした :scream:',
+    'post_footer' : '\nおめでとうございます！ :tada:',
 }
 post_format_list = {
     'post_header_format' : '＊【現在の利用者一覧】＊',
@@ -86,6 +98,17 @@ def login_members(members, name, day):
 
     return ret
 
+def login_days(members, name, endofmonth):
+    year = endofmonth.year
+    month = endofmonth.month
+    days = endofmonth.day
+    scores = defaultdict(int)
+    for day in range(1,days+1):
+        for m in login_members(members, name, date(year,month,day)):
+            scores[m] += 1
+
+    return sorted(scores.items(), key=lambda x: -x[1])
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -108,6 +131,8 @@ if __name__ == '__main__':
                         help='execute even if it has been already done for the day.')
     parser.add_argument('--day', default=None,
                         help='specify a day in %Y%m%d format.')
+    parser.add_argument('--ranking', action='store_true',
+                        help='show monthly ranking.')
     args = parser.parse_args()
 
     if args.noslack:
@@ -129,10 +154,12 @@ if __name__ == '__main__':
     today_id = (today-ADfirst).days
     history_file_path = history_file_path_format.format(today_id)
 
-    if (not args.list) and (not args.oncemore) and os.path.exists(history_file_path):
+    if (not args.list and not args.ranking) and (not args.oncemore) and os.path.exists(history_file_path):
         exit()
     if args.list:
         post_format.update(post_format_list)
+    elif args.ranking:
+        post_format.update(post_format_ranking)
     for k, v in post_format.items():
         globals()[k] = v
 
@@ -164,18 +191,51 @@ if __name__ == '__main__':
     members.discard(my_id)
     N_members = len(members)
     if args.list:
+        header_data = (None,)
         logins = set(members)
+    elif args.ranking:
+        lastmonth = date(today.year, today.month, 1) + timedelta(days=-1)
+        prev_n, prev_s = -1, 50
+        ranking = login_days(members, name, lastmonth)
+        logins = []
+        remain_str_list = []
+        for n, r in enumerate(ranking):
+            m, s = r
+            if s == prev_s:
+                if prev_n < len(rank_marks):
+                    mark = rank_marks[prev_n]
+                else:
+                    mark = other_mark
+                logins.append((prev_n+1, mark, m, s))
+            elif n < N_ranking:
+                if n < len(rank_marks):
+                    mark = rank_marks[n]
+                else:
+                    mark = other_mark
+                prev_n, prev_s = n, s
+                logins.append((n+1, mark, m, s))
+            elif s >= 2:
+                remain_str_list.append('<@{}>'.format(m))
+            else:
+                break
+        if remain_str_list:
+            post_footer =  post_remain_format.format('、'.join(remain_str_list)) + '\n' + post_footer
+        header_data = ('{}月'.format(lastmonth.month), N_ranking)
     else:
         logins = login_members(members, name, today)
         # write the new history
         with open(history_file_path, 'w') as f:
             for m in logins:
                 print(m, file=f)
+        header_data = ('{}月{}日'.format(today.month, today.day),)
 
-    post_lines = [post_header_format.format('{}月{}日'.format(today.month, today.day))]
+    post_lines = [post_header_format.format(*header_data)]
     if logins:
         for m in logins:
-            post_lines.append(post_line_format.format(m))
+            if isinstance(m, tuple):
+                post_lines.append(post_line_format.format(*m))
+            else:
+                post_lines.append(post_line_format.format(m))
         post_lines.append(
             post_footer.format(N_members)
         )
