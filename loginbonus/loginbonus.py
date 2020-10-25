@@ -20,18 +20,18 @@ channel_name = '自動アナウンス'
 appdir = '/var/loginbonus/'
 base_dir = os.environ['HOME'] + appdir
 history_dir = base_dir + 'history/'
-history_file_format = '%d.txt' # date
+history_file_format = '{}.txt' # date
 ts_file = 'ts-loginbonus'
 excluded_members_file = 'excluded_members.txt'
 post_format = {
-    'post_header_format' : '＊【%sのログインボーナス】＊',
-    'post_line_format' : '<@%s> さん', # member
+    'post_header_format' : '＊【{}のログインボーナス】＊',
+    'post_line_format' : '<@{}> さん', # member
     'post_nobody' : 'ログインした人はいません。',
     'post_footer' : '\n以上の方にログインボーナスが付与されます。\nおめでとうございます！ :sparkles:',
 }
 post_format_list = {
     'post_header_format' : '＊【現在の利用者一覧】＊',
-    'post_footer' : '以上、%d名です。 :sparkles:',
+    'post_footer' : '以上、{}名です。 :sparkles:',
 }
 
 loginname_format = re.compile(r'u[0-9]{6}[a-z]')
@@ -127,13 +127,12 @@ if __name__ == '__main__':
         today = date.today() - timedelta(days=1) # actually yesterday
     ADfirst = date(1,1,1) # AD1.1.1 is Monday
     today_id = (today-ADfirst).days
-    history_file_path = history_file_path_format % today_id
+    history_file_path = history_file_path_format.format(today_id)
 
     if (not args.list) and (not args.oncemore) and os.path.exists(history_file_path):
         exit()
     if args.list:
-        for k, v in post_format_list.items():
-            post_format[k] = v
+        post_format.update(post_format_list)
     for k, v in post_format.items():
         globals()[k] = v
 
@@ -163,6 +162,7 @@ if __name__ == '__main__':
             name[member['id']] = real_name
     members = set([ member['id'] for member in members_info]) - excluded_members
     members.discard(my_id)
+    N_members = len(members)
     if args.list:
         logins = set(members)
     else:
@@ -172,12 +172,12 @@ if __name__ == '__main__':
             for m in logins:
                 print(m, file=f)
 
-    post_lines = [post_header_format % '{}月{}日'.format(today.month, today.day)]
+    post_lines = [post_header_format.format('{}月{}日'.format(today.month, today.day))]
     if logins:
         for m in logins:
-            post_lines.append(post_line_format % m)
+            post_lines.append(post_line_format.format(m))
         post_lines.append(
-            post_footer
+            post_footer.format(N_members)
         )
     else:
         post_lines.append(post_nobody)
