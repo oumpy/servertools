@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import os
 from datetime import date, timedelta
+import calendar
 from slack import WebClient
 import argparse
 import subprocess
@@ -194,9 +195,10 @@ if __name__ == '__main__':
         header_data = (None,)
         logins = set(members)
     elif args.ranking:
-        lastmonth = date(today.year, today.month, 1) + timedelta(days=-1)
+        thismonth_days = calendar.monthrange(today.year, today.month)[1]
+        thismonthend = date(today.year, today.month, thismonth_days)
         prev_n, prev_s = -1, 50
-        ranking = login_days(members, name, lastmonth)
+        ranking = login_days(members, name, thismonthend)
         logins = []
         remain_str_list = []
         for n, r in enumerate(ranking):
@@ -220,7 +222,7 @@ if __name__ == '__main__':
                 break
         if remain_str_list:
             post_footer =  post_remain_format.format('、'.join(remain_str_list)) + '\n' + post_footer
-        header_data = ('{}月'.format(lastmonth.month), N_ranking)
+        header_data = ('{}月'.format(today.month), N_ranking)
     else:
         logins = login_members(members, name, today)
         # write the new history
