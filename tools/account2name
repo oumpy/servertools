@@ -17,7 +17,8 @@ while True:
                         stdout=subprocess.PIPE,
                     ).stdout.split('\n')[1].split()[1:3])
                 namedic[ac] = name
-        for ac, name in namedic.items():
+            else:
+                name = namedic[ac]
             line = re.sub(ac, name + '\t', line)
         print(line)
     except EOFError:
