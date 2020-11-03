@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import subprocess
+import re
+
+account_regex = re.compile(r'u[0-9]{6}[a-z]')
+namedic = dict()
+while True:
+    try:
+        line = input()
+        acs = account_regex.findall(line)
+        for ac in acs:
+            if not ac in namedic:
+                name = ' '.join(subprocess.run(
+                        ['finger', '-s', ac],
+                        encoding='utf-8',
+                        stdout=subprocess.PIPE,
+                    ).stdout.split('\n')[1].split()[1:3])
+                namedic[ac] = name
+        for ac, name in namedic.items():
+            line = re.sub(ac, name + '\t', line)
+        print(line)
+    except EOFError:
+        break
