@@ -25,3 +25,7 @@ A Slack Bot script, which list-up the members who logged in during a term (e.g. 
 
 ## timemachine
 Time Machine backup system implemented by Python, using Btrfs (and partly compatible with ZFS) snapshot function.
+
+## post2slack
+Read message from the standard input and post it to slack.
+You can split it to multiple posts, by using the `--separator` option.
