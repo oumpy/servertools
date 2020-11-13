@@ -188,7 +188,7 @@ if __name__ == '__main__':
             name[member['id']] = display_name
         else:
             name[member['id']] = real_name
-    members = set([ member['id'] for member in members_info]) - excluded_members
+    members = set([ member['id'] for member in members_info if not member['deleted']]) - excluded_members
     members.discard(my_id)
     N_members = len(members)
     if args.list:
