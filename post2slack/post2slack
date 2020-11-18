@@ -83,10 +83,12 @@ if __name__ == '__main__':
         if not args.mute:
             params['reply_broadcast'] = 'True'
 
-    message_lines.append(args.separator)
+    message_lines.append(None)
     submessage_lines = []
     for line in message_lines:
-        if not (line == args.separator or re.match(args.separator, line)):
+        if line is None:
+            pass
+        elif not args.separator or not (line == args.separator or re.match(args.separator, line)):
             submessage_lines.append(line)
             continue
 
