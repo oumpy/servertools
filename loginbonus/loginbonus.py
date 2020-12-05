@@ -74,6 +74,21 @@ def get_channel_id(client, channel_name):
     else:
         return target['id']
 
+def auth_logins(day):
+    with open('/var/log/auth.log') as f:
+        auth_lines = f.readlines()
+    logins = set()
+    month_str = day.strftime('%b')
+    day_str = str(int(day.strftime('%d')))
+    regex = re.compile(r'\s*Accepted publickey for (\S+) from')
+    for line in auth_lines:
+        m, d = line.split()[:2]
+        if m == month_str and d == day_str:
+            hit = regex.match(line.split(':')[3])
+            if hit:
+                logins.add(hit.groups()[0])
+    return logins
+
 def login_members(members, name, day):
     daystr = day.strftime('%Y%m%d')
     since = daystr + '000000'
@@ -82,7 +97,7 @@ def login_members(members, name, day):
                     ['last', '-s', since, '-t', till],
                     encoding='utf-8', stdout=subprocess.PIPE,
                     ).stdout.splitlines()[:-2]
-    logins = { line.split()[0] for line in last_out }
+    logins = { line.split()[0] for line in last_out } | auth_logins(day)
     ret = set()
     for m in members:
         m_name = name[m].strip()
