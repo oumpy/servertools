@@ -8,6 +8,7 @@ import argparse
 import subprocess
 import re
 from collections import defaultdict
+import gzip
 
 # Example:
 # python loginbonus.py
@@ -75,8 +76,18 @@ def get_channel_id(client, channel_name):
         return target['id']
 
 def auth_logins(day):
-    with open('/var/log/auth.log') as f:
-        auth_lines = f.readlines()
+    authlogs = [
+        '/var/log/auth.log', '/var/log/auth.log.1', 
+        '/var/log/auth.log.2.gz', '/var/log/auth.log.3.gz', '/var/log/auth.log.4.gz',
+    ]
+    auth_lines = []
+    for authlog in authlogs:
+        if authlog[-3:] == '.gz':
+            f = gzip.open(authlog, 'rt')
+        else:
+            f = open(authlog)
+        auth_lines.extend(f.readlines())            
+        f.close()
     logins = set()
     month_str = day.strftime('%b')
     day_str = str(int(day.strftime('%d')))
