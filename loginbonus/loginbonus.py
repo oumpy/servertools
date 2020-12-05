@@ -89,7 +89,7 @@ def auth_logins(day):
                 logins.add(hit.groups()[0])
     return logins
 
-def login_members(members, name, day):
+def login_members(members, name, day, auth):
     daystr = day.strftime('%Y%m%d')
     since = daystr + '000000'
     till = daystr + '235959'
@@ -97,7 +97,9 @@ def login_members(members, name, day):
                     ['last', '-s', since, '-t', till],
                     encoding='utf-8', stdout=subprocess.PIPE,
                     ).stdout.splitlines()[:-2]
-    logins = { line.split()[0] for line in last_out } | auth_logins(day)
+    logins = { line.split()[0] for line in last_out }
+    if auth:
+        logins |= auth_logins(day)
     ret = set()
     for m in members:
         m_name = name[m].strip()
@@ -114,13 +116,13 @@ def login_members(members, name, day):
 
     return ret
 
-def login_days(members, name, endofmonth):
+def login_days(members, name, endofmonth, auth):
     year = endofmonth.year
     month = endofmonth.month
     days = endofmonth.day
     scores = defaultdict(int)
     for day in range(1,days+1):
-        for m in login_members(members, name, date(year,month,day)):
+        for m in login_members(members, name, date(year,month,day), auth):
             scores[m] += 1
 
     return sorted(scores.items(), key=lambda x: -x[1])
@@ -149,6 +151,8 @@ if __name__ == '__main__':
                         help='specify a day in %%Y%%m%%d format.')
     parser.add_argument('--ranking', action='store_true',
                         help='show monthly ranking.')
+    parser.add_argument('--auth', action='store_true',
+                        help='Use auth.log, in addition to wtmp.log.')
     args = parser.parse_args()
 
     if args.noslack:
@@ -213,7 +217,7 @@ if __name__ == '__main__':
         thismonth_days = calendar.monthrange(today.year, today.month)[1]
         thismonthend = date(today.year, today.month, thismonth_days)
         prev_n, prev_s = -1, 50
-        ranking = login_days(members, name, thismonthend)
+        ranking = login_days(members, name, thismonthend, args.auth)
         logins = []
         remain_str_list = []
         for n, r in enumerate(ranking):
@@ -239,7 +243,7 @@ if __name__ == '__main__':
             post_footer =  post_remain_format.format('、'.join(remain_str_list)) + '\n' + post_footer
         header_data = ('{}月'.format(today.month), N_ranking)
     else:
-        logins = login_members(members, name, today)
+        logins = login_members(members, name, today, args.auth)
         # write the new history
         with open(history_file_path, 'w') as f:
             for m in logins:
