@@ -8,6 +8,7 @@ import argparse
 import subprocess
 import re
 from collections import defaultdict
+import gzip
 
 # Example:
 # python loginbonus.py
@@ -74,7 +75,34 @@ def get_channel_id(client, channel_name):
     else:
         return target['id']
 
-def login_members(members, name, day):
+def auth_logins(day):
+    authlogs = (
+        ['/var/log/auth.log']
+        + ['/var/log/auth.log.{}'.format(i) for i in range(1,10)]
+        + ['/var/log/auth.log.{}.gz'.format(i) for i in range(1,10)]
+    )
+    auth_lines = []
+    for authlog in authlogs:
+        if os.path.isfile(authlog):
+            if authlog[-3:] == '.gz':
+                f = gzip.open(authlog, 'rt')
+            else:
+                f = open(authlog)
+            auth_lines.extend(f.readlines())            
+            f.close()
+    logins = set()
+    month_str = day.strftime('%b')
+    day_str = str(int(day.strftime('%d')))
+    regex = re.compile(r'\s*Accepted publickey for (\S+) from')
+    for line in auth_lines:
+        m, d = line.split()[:2]
+        if m == month_str and d == day_str:
+            hit = regex.match(line.split(':')[3])
+            if hit:
+                logins.add(hit.groups()[0])
+    return logins
+
+def login_members(members, name, day, auth):
     daystr = day.strftime('%Y%m%d')
     since = daystr + '000000'
     till = daystr + '235959'
@@ -83,6 +111,8 @@ def login_members(members, name, day):
                     encoding='utf-8', stdout=subprocess.PIPE,
                     ).stdout.splitlines()[:-2]
     logins = { line.split()[0] for line in last_out }
+    if auth:
+        logins |= auth_logins(day)
     ret = set()
     for m in members:
         m_name = name[m].strip()
@@ -99,13 +129,13 @@ def login_members(members, name, day):
 
     return ret
 
-def login_days(members, name, endofmonth):
+def login_days(members, name, endofmonth, auth):
     year = endofmonth.year
     month = endofmonth.month
     days = endofmonth.day
     scores = defaultdict(int)
     for day in range(1,days+1):
-        for m in login_members(members, name, date(year,month,day)):
+        for m in login_members(members, name, date(year,month,day), auth):
             scores[m] += 1
 
     return sorted(scores.items(), key=lambda x: -x[1])
@@ -131,9 +161,11 @@ if __name__ == '__main__':
     parser.add_argument('--oncemore', action='store_true',
                         help='execute even if it has been already done for the day.')
     parser.add_argument('--day', default=None,
-                        help='specify a day in %Y%m%d format.')
+                        help='specify a day in %%Y%%m%%d format.')
     parser.add_argument('--ranking', action='store_true',
                         help='show monthly ranking.')
+    parser.add_argument('--auth', action='store_true',
+                        help='Use auth.log, in addition to wtmp.log.')
     args = parser.parse_args()
 
     if args.noslack:
@@ -198,7 +230,7 @@ if __name__ == '__main__':
         thismonth_days = calendar.monthrange(today.year, today.month)[1]
         thismonthend = date(today.year, today.month, thismonth_days)
         prev_n, prev_s = -1, 50
-        ranking = login_days(members, name, thismonthend)
+        ranking = login_days(members, name, thismonthend, args.auth)
         logins = []
         remain_str_list = []
         for n, r in enumerate(ranking):
@@ -224,7 +256,7 @@ if __name__ == '__main__':
             post_footer =  post_remain_format.format('、'.join(remain_str_list)) + '\n' + post_footer
         header_data = ('{}月'.format(today.month), N_ranking)
     else:
-        logins = login_members(members, name, today)
+        logins = login_members(members, name, today, args.auth)
         # write the new history
         with open(history_file_path, 'w') as f:
             for m in logins:
