@@ -76,10 +76,11 @@ def get_channel_id(client, channel_name):
         return target['id']
 
 def auth_logins(day):
-    authlogs = [
-        '/var/log/auth.log', '/var/log/auth.log.1', 
-        '/var/log/auth.log.2.gz', '/var/log/auth.log.3.gz', '/var/log/auth.log.4.gz',
-    ]
+    authlogs = (
+        ['/var/log/auth.log']
+        + ['/var/log/auth.log.{}'.format(i) for i in range(1,10)]
+        + ['/var/log/auth.log.{}.gz'.format(i) for i in range(1,10)]
+    )
     auth_lines = []
     for authlog in authlogs:
         if os.path.isfile(authlog):
