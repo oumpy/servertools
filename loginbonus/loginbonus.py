@@ -131,7 +131,7 @@ if __name__ == '__main__':
     parser.add_argument('--oncemore', action='store_true',
                         help='execute even if it has been already done for the day.')
     parser.add_argument('--day', default=None,
-                        help='specify a day in %Y%m%d format.')
+                        help='specify a day in %%Y%%m%%d format.')
     parser.add_argument('--ranking', action='store_true',
                         help='show monthly ranking.')
     args = parser.parse_args()
