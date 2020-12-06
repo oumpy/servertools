@@ -82,12 +82,13 @@ def auth_logins(day):
     ]
     auth_lines = []
     for authlog in authlogs:
-        if authlog[-3:] == '.gz':
-            f = gzip.open(authlog, 'rt')
-        else:
-            f = open(authlog)
-        auth_lines.extend(f.readlines())            
-        f.close()
+        if os.path.isfile(authlog):
+            if authlog[-3:] == '.gz':
+                f = gzip.open(authlog, 'rt')
+            else:
+                f = open(authlog)
+            auth_lines.extend(f.readlines())            
+            f.close()
     logins = set()
     month_str = day.strftime('%b')
     day_str = str(int(day.strftime('%d')))
