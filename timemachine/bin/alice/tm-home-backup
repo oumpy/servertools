@@ -1,4 +1,12 @@
 #!/bin/bash
-backup_home /usr/local/etc/sstm/backup_home.conf --inplace --delete-excluded -aAXH --max-size=100M /mnt/admin/timemachine/private/original-disk/home/snapshots/latest/ /mnt/admin/timemachine/private/original-disk/home/backup/original/
+ssdir="/mnt/admin/timemachine/private/original-disk/home/snapshots"
+latest=${ssdir}/latest
+latest4backup=${ssdir}/latest4backup
+if [ -d ${latest4backup} ]; then
+   btrfs subvolume delete ${latest4backup}
+fi
+btrfs subvolume snapshot ${latest} ${latest4backup}
+backup_home /usr/local/etc/sstm/backup_home.conf --inplace --delete-excluded -aAXH --max-size=100M ${latest}/ /mnt/admin/timemachine/private/original-disk/home/backup/original/
+btrfs subvolume delete ${latest4backup}
 senddiff /mnt/admin/timemachine/private/original-disk/home/backup /mnt/admin/timemachine/private/backup-disk/home/backup
 sstm -c /usr/local/etc/sstm/home_backup.yaml -s backup /mnt/admin/timemachine/private/backup-disk/home/backup/latest /mnt/admin/timemachine/private/backup-disk/home/snapshots
