@@ -1,0 +1,3 @@
+#!/bin/bash
+sstm --latest -c /usr/local/etc/sstm/home_original.yaml /home /mnt/admin/timemachine/private/original-disk/home/snapshots
+sync
