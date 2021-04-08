@@ -5,7 +5,7 @@ import sys
 import subprocess
 
 user_groups = ['users', 'cdrom', 'plugdev']
-advisor_groups = ['advisor', 'cdrom', 'plugdev']
+advisor_groups = ['advisors', 'cdrom', 'plugdev']
 oumpy_groups = ['oumpy']
 etcgroup = '/etc/group'
 
