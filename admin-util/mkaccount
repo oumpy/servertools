@@ -15,7 +15,7 @@ def ask(message, default=True):
             return False
 
 user_groups = ['users', 'cdrom', 'plugdev']
-advisor_groups = ['advisor', 'cdrom', 'plugdev']
+advisor_groups = ['advisors', 'cdrom', 'plugdev']
 oumpy_groups = ['oumpy']
 etcgroup = '/etc/group'
 
