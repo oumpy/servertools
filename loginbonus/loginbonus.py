@@ -3,7 +3,7 @@
 import os
 from datetime import date, timedelta
 import calendar
-from slack import WebClient
+from slack_sdk import WebClient
 import argparse
 import subprocess
 import re
