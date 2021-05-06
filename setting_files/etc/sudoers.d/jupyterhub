@@ -1,0 +1,8 @@
+# the command(s) the Hub can run on behalf of the above users without needing a password
+# the exact path may differ, depending on how sudospawner was installed
+Cmnd_Alias JUPYTER_CMD = /home/admin/jupyterhub/.pyenv/shims/sudospawner
+
+# actually give the Hub user permission to run the above command on behalf
+# of the above users without prompting for a password
+%jupyterhub ALL=(jupyterhub) ALL
+jupyterhub ALL=(%jupyterhub_users) NOPASSWD:JUPYTER_CMD

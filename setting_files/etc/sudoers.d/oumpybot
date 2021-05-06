@@ -1,0 +1,3 @@
+# %oumpybot ALL=(oumpybot) ALL
+%oumpybot-kp ALL=(oumpybot-kp) ALL
+%oumpybot-relay ALL=(oumpybot-relay) ALL
