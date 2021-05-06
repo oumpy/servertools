@@ -1,0 +1,6 @@
+Cmnd_Alias USERMANAGE = /usr/local/sbin/mkaccount,/usr/local/sbin/setpublickey,/usr/bin/chfn
+Cmnd_Alias APTINSTALL = /usr/local/bin/apt-install,/usr/bin/apt update,/usr/bin/apt upgrade,/usr/bin/apt autoremove 
+Cmnd_Alias VIEW = /bin/ls,/bin/cat,/bin/more,/usr/bin/less,/usr/bin/du,/usr/bin/grep
+Cmnd_Alias ADDMESUDO = /usr/local/sbin/addmesudo
+%committee ALL=(ALL) ADDMESUDO,VIEW
+%subadmin ALL=(ALL) USERMANAGE,APTINSTALL

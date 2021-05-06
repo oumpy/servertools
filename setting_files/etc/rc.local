@@ -1,0 +1,13 @@
+#!/bin/sh
+# Forward SSH port to Bob
+aliceport=
+bobip=
+bobsshport=
+extport1=
+extport2=
+sshkeypath1=
+sshkeypath2=
+alicesshaccount=
+bobsshaccount=
+sudo -u ${alicesshaccount} autossh -o Port=${bobsshport} -o ServerAliveInterval=5 ${bobsshaccount}@${bobip} -N -R 0.0.0.0:${extport1}:localhost:${aliceport} -i ${sshkeypath1} &
+autossh -o Port=${bobsshport} -o ServerAliveInterval=5 ${bobsshaccount}@${bobip} -N -R 0.0.0.0:${extport2}:localhost:${aliceport} -i ${sshkeypath2} &
