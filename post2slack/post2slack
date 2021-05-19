@@ -53,50 +53,72 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('--separator', default=None,
                         help='split posts by lines beginning with the specified separator (regex available).')
+    parser.add_argument('--optionline', default='%',
+                        help='set in-line-header to set options in the input.')    
     args = parser.parse_args()
-    channel_name = args.channel
+    argc = len(sys.argv)
     slacktoken_file_path = os.path.join(base_dir, slacktoken_file)
 
     message_lines = sys.stdin.readlines()
     if not ''.join(message_lines).strip():
         exit()
 
-    if args.slacktoken:
-        token = args.slacktoken
-    elif args.slacktokenfile:
-        with open(args.slacktokenfile, 'r') as f:
-            token = f.readline().rstrip()
-    else:
-        with open(slacktoken_file_path, 'r') as f:
-            token = f.readline().rstrip()
-    web_client = WebClient(token=token)
-    if args.channel:
-        channel_id = get_channel_id(web_client, args.channel)
-    else:
-        channel_id = get_channel_id(web_client, channel_name)
-
-    params={
-        'channel': channel_id,
-    }
-    if args.ts:
-        params['thread_ts'] = args.ts
-        if not args.mute:
-            params['reply_broadcast'] = 'True'
-
-    message_lines.append(None)
+    submessages = []
     submessage_lines = []
     for line in message_lines:
-        if line is None:
-            pass
-        elif not args.separator or not (line == args.separator or re.match(args.separator, line)):
+        if not args.separator or not re.match(args.separator, line):
             submessage_lines.append(line)
-            continue
+        elif submessage_lines:
+            submessages.append(submessage_lines)
+            submessage_lines = []
+    else:
+        if submessage_lines:
+            submessages.append(submessage_lines)
 
-        submessage = ''.join(submessage_lines).rstrip('\n')
-        submessage_lines = []
+    for submessage_lines in submessages:
+        sys.argv = sys.argv[:argc]
+        args = parser.parse_args()
+
+        # read submessage options
+        options = []
+        option_lines = 0
+        for line in submessage_lines:
+            m = re.match(args.optionline, line)
+            if m:
+                options += line[m.end():].strip().split()
+                option_lines += 1
+            else:
+                break
+        if option_lines:
+            sys.argv += options
+            args = parser.parse_args()
+
+        submessage = ''.join(submessage_lines[option_lines:]).rstrip('\n')
+        # continue if submessage is empty
         if not submessage.strip():
             continue
 
+        # set submessage parameters
+        if args.slacktoken:
+            token = args.slacktoken
+        elif args.slacktokenfile:
+            with open(args.slacktokenfile, 'r') as f:
+                token = f.readline().rstrip()
+        else:
+            with open(slacktoken_file_path, 'r') as f:
+                token = f.readline().rstrip()
+        web_client = WebClient(token=token)
+        channel_id = get_channel_id(web_client, args.channel)
+
+        params={
+            'channel': channel_id,
+        }
+        if args.ts:
+            params['thread_ts'] = args.ts
+            if not args.mute:
+                params['reply_broadcast'] = 'True'
+
+        # post submessage
         params['text'] = submessage
         response = web_client.api_call(
             'chat.postMessage',
