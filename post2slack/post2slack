@@ -49,6 +49,8 @@ if __name__ == '__main__':
                         help='file including slack bot token.')
     parser.add_argument('--ts', default=None,
                         help='specify the thread ts.')
+    parser.add_argument('--printts', action='store_true',
+                        help='print ts\'s of the posted messages.')
     parser.add_argument('--mute', help='post in thread without showing on channel.',
                         action='store_true')
     parser.add_argument('--separator', default=None,
@@ -124,3 +126,5 @@ if __name__ == '__main__':
             'chat.postMessage',
             params=params
         )
+        if args.printts:
+            print(response.data['ts'])
