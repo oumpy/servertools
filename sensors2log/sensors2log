@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+import datetime
+import subprocess
+import time
+import argparse
+
+cpu_sensor_command = ["/usr/bin/sensors"]
+nvidia_sensor_command = ["/usr/bin/nvidia-smi", "dmon", "-s", "p", "-c", "1"]
+
+alert_temperature = 95
+repeat_max = 11
+repeat_interval = 30
+
+def cpu_sensor(T = alert_temperature):
+    nowstr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    package = 0
+    cores = []
+    proc = subprocess.Popen(cpu_sensor_command, stdout=subprocess.PIPE)
+    for line in proc.stdout:
+        record = line.decode().split(':')
+        if len(record) < 2:
+            continue
+        title, temperature = record[:2]
+        if title[:4] not in ["Pack", "Core"]:
+            continue
+        temperature = float(temperature.split()[0].strip(" +°C"))
+        if title[:4] == "Pack":
+            package = temperature
+        elif title[:4] == "Core":
+            cores.append(temperature)
+    cores.sort()
+    L = len(cores)
+    package = round(package,1)
+    mean_core = round(sum(cores)/len(cores),1)
+    mid_core = round(cores[L//2] if L%2 else (cores[L//2-1]+cores[L//2])/2,1)
+    max_core = round(cores[-1],1)
+    min_core = round(cores[0],1)
+
+    print('[{}] package:{}°C, max:{}°C, mid:{}°C, min:{}°C, mean:{}°C'.format(
+        nowstr,
+        package, max_core, mid_core, min_core, mean_core,
+        ))
+
+    if package >= T:
+        return False
+    else:
+        return True
+
+def nvidia_sensor(T = alert_temperature):
+    nowstr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cores = []
+    proc = subprocess.Popen(nvidia_sensor_command, stdout=subprocess.PIPE)
+    for line in proc.stdout:
+        line = line.decode()
+        if line[0] == '#':
+            continue
+        record = line.split()
+        idx, _, temperature = map(int, record[:3])
+        cores.append(temperature)
+    cores.sort()
+    L = len(cores)
+    mean_core = round(sum(cores)/len(cores),1)
+    mid_core = round(cores[L//2] if L%2 else (cores[L//2-1]+cores[L//2])/2,1)
+    max_core = round(cores[-1],1)
+    min_core = round(cores[0],1)
+
+    if L >= 3:
+        print('[{}] max:{}°C, mid:{}°C, min:{}°C, mean:{}°C'.format(
+            nowstr,
+            max_core, mid_core, min_core, mean_core,
+            ))
+    elif L == 2:
+        print('[{}] max:{}°C, min:{}°C, mean:{}°C'.format(
+            nowstr,
+            max_core, min_core, mean_core,
+            ))
+    else:
+        print('[{}] {}°C'.format(
+            nowstr,
+            max_core,
+            ))
+
+    if max_core >= T:
+        return False
+    else:
+        return True
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--nvidia', action='store_true',
+                        help='nvidia GPU information.')
+    parser.add_argument('--temperature', type=int, default=alert_temperature, 
+                        help='set alert-temperature (°C). (default: {})'.format(alert_temperature))
+    args = parser.parse_args()
+
+    if args.nvidia:
+        sensor = nvidia_sensor
+    else:
+        sensor = cpu_sensor
+
+    i = 0
+    while not sensor(args.temperature):
+        if i >= repeat_max:
+            break
+        else:
+            i += 1
+            time.sleep(repeat_interval)
