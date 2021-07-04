@@ -20,9 +20,9 @@ slacktoken_file = 'slack_token'
 excluded_members = set()
 
 channel_name = '自動アナウンス'
-appdir = '/var/loginbonus/'
-base_dir = os.environ['HOME'] + appdir
-history_dir = base_dir + 'history/'
+appdir = 'var/loginbonus/'
+base_dir = os.path.join(os.environ['HOME'], appdir)
+history_dir = os.path.join(base_dir, 'history/')
 history_file_format = '{}.txt' # date
 ts_file = 'ts-loginbonus'
 excluded_members_file = 'excluded_members.txt'
@@ -172,9 +172,9 @@ if __name__ == '__main__':
         post_to_slack = False
     channel_name = args.channel
 
-    slacktoken_file_path = base_dir + slacktoken_file
-    history_file_path_format = history_dir + history_file_format
-    excluded_members_file_path = base_dir + excluded_members_file
+    slacktoken_file_path = os.path.join(base_dir, slacktoken_file)
+    history_file_path_format = os.path.join(history_dir, history_file_format)
+    excluded_members_file_path = os.path.join(base_dir, excluded_members_file)
 
     if args.day and isinstance(args.day,str) and len(args.day)>=8:
         year = int(args.day[:4])
