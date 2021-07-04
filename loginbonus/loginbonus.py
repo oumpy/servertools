@@ -21,8 +21,6 @@ excluded_members = set()
 
 channel_name = '自動アナウンス'
 appdir = 'var/loginbonus/'
-base_dir = os.path.join(os.environ['HOME'], appdir)
-history_dir = os.path.join(base_dir, 'history/')
 history_file_format = '{}.txt' # date
 ts_file = 'ts-loginbonus'
 excluded_members_file = 'excluded_members.txt'
@@ -166,11 +164,16 @@ if __name__ == '__main__':
                         help='show monthly ranking.')
     parser.add_argument('--auth', action='store_true',
                         help='Use auth.log, in addition to wtmp.log.')
+    parser.add_argument('--appdir', default=appdir,
+                        help='Set application directory, as a relative path from $HOME. (default: {})'.format(appdir))
     args = parser.parse_args()
 
     if args.noslack:
         post_to_slack = False
     channel_name = args.channel
+
+    base_dir = os.path.join(os.environ['HOME'], args.appdir)
+    history_dir = os.path.join(base_dir, 'history/')
 
     slacktoken_file_path = os.path.join(base_dir, slacktoken_file)
     history_file_path_format = os.path.join(history_dir, history_file_format)
