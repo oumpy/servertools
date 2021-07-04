@@ -8,7 +8,7 @@ cpu_sensor_command = ["/usr/bin/sensors"]
 nvidia_sensor_command = ["/usr/bin/nvidia-smi", "dmon", "-s", "p", "-c", "1"]
 
 alert_temperature = 95
-repeat_max = 11
+repeat_max = 10
 repeat_interval = 30
 
 def cpu_sensor(T = alert_temperature):
