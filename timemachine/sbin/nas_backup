@@ -1,0 +1,55 @@
+#/bin/bash
+limit_size=4500000000000 # 4.5TB
+remote_rsync_command='sudo /opt/bin/rsync'
+
+OPT=`getopt -o l:r: -l limit-size:,remote-rsync: -- "$@"`
+if [ $? != 0 ] ; then
+    exit 1
+fi
+eval set -- "$OPT"
+
+while true
+do
+    case $1 in
+        -r | --remote-rsync)
+            remote_rsync_command=$2
+            shift 2
+            ;;
+        -l | --limit-size)
+            limit_size=$2
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "Unknown option." 1>&2
+            exit 1
+            ;;
+    esac
+done
+
+orig_filelist_to=original_filelist
+orig_filelist=/tmp/`basename $0`.$$.orig.filelist
+exclude_filelist=/tmp/`basename $0`.$$.backup.filelist
+backup_from=$1
+backup_to=$2
+
+cd "${backup_from}"
+find ./ -ls > ${orig_filelist}
+find ./  -not -type d -print0 \
+    | xargs -0 du -sb \
+    | sort -n \
+    | awk -F '\t' '{S+=$1; if(S>'${limit_size}'){print $2}}' \
+    > ${exclude_filelist}
+
+rsync -auHz \
+    --delete --delete-excluded \
+    --rsync-path="${remote_rsync_command}" \
+    --exclude-from=${exclude_filelist} \
+    ./ "${backup_to}"
+rsync -auHz \
+    --rsync-path="${remote_rsync_command}" \
+    ${orig_filelist} "${backup_to}${orig_filelist_to}"
+
+rm ${backup_filelist} ${orig_filelist}
