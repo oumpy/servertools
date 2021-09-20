@@ -1,0 +1,27 @@
+#!/bin/bash
+exec {lock_fd}< "$0"
+flock --nonblock ${lock_fd} || exit 0
+
+use_sstm=false
+
+backup_from="/"
+target_dir="/volume2/alice_backup/system"
+midvol="/mnt/admin/timemachine/private/original-disk/system/backup/recent/for_cathy"
+target_server="backup@192.168.10.4"
+sstm_conf="/volume2/alice_backup/sstm.yaml"
+
+target_subdir="current"
+target_sstm="/usr/local/sbin/sstm"
+backup_to=${target_server}:${target_dir}
+
+if [ -d ${midvol} ]; then
+  btrfs subvolume delete ${midvol}
+  sync
+fi
+btrfs subvolume snapshot ${backup_from} ${midvol}
+nas_backup ${midvol}/ ${backup_to}/${target_subdir}/
+btrfs subvolume delete ${midvol}
+
+if "${use_sstm}"; then
+    ssh ${target_server} sudo ${target_sstm} --latest -c ${sstm_conf} ${target_dir}/${target_subdir} ${target_dir}
+fi
