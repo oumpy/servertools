@@ -44,12 +44,12 @@ find ./  -not -type d -print0 \
     > ${exclude_filelist}
 
 rsync -auHz \
-    --rsync-path="${remote_rsync_command}" \
-    ${orig_filelist} "${backup_to}${orig_filelist_to}"
-rsync -auHz \
     --delete --delete-excluded \
     --rsync-path="${remote_rsync_command}" \
     --exclude-from=${exclude_filelist} \
     ./ "${backup_to}"
+rsync -auHz \
+    --rsync-path="${remote_rsync_command}" \
+    ${orig_filelist} "${backup_to}${orig_filelist_to}"
 
 rm ${backup_filelist} ${orig_filelist}
