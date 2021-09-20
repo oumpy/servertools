@@ -31,7 +31,7 @@ done
 
 orig_filelist_to=original_filelist
 orig_filelist=/tmp/`basename $0`.$$.orig.filelist
-backup_filelist=/tmp/`basename $0`.$$.backup.filelist
+exclude_filelist=/tmp/`basename $0`.$$.backup.filelist
 backup_from=$1
 backup_to=$2
 
@@ -41,18 +41,17 @@ find ./  -not -type d -print0 \
     > ${orig_filelist}
 cat ${orig_filelist} \
     | sort -n \
-    | awk -F '\t' '{S+=$1; if(S>'${limit_size}'){exit}else{print $2}}' \
-    > ${backup_filelist}
+    | awk -F '\t' '{S+=$1; if(S>'${limit_size}'){print $2}}' \
+    > ${exclude_filelist}
 find ./ -ls > ${orig_filelist}
 
 rsync -auHz \
     --rsync-path="${remote_rsync_command}" \
     ${orig_filelist} "${backup_to}${orig_filelist_to}"
 rsync -auHz \
-    --delete \
+    --delete --delete-excluded \
     --rsync-path="${remote_rsync_command}" \
-    --exclude="${backup_from}${orig_filelist_to}" \
-    --files-from=${backup_filelist} \
+    --exclude-from=${exclude_filelist} \
     ./ "${backup_to}"
 
 rm ${backup_filelist} ${orig_filelist}
