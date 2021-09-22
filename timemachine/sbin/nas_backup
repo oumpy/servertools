@@ -29,11 +29,14 @@ do
     esac
 done
 
-orig_filelist_to=original_filelist
+orig_filelist_to='valume_original_files.lst'
 orig_filelist=/tmp/`basename $0`.$$.orig.filelist
 exclude_filelist=/tmp/`basename $0`.$$.backup.filelist
 backup_from=$1
 backup_to=$2
+
+touch ${orig_filelist} ${exclude_filelist}
+chmod 600 ${orig_filelist} ${exclude_filelist}
 
 cd "${backup_from}"
 find ./ -ls > ${orig_filelist}
