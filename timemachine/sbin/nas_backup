@@ -55,4 +55,4 @@ rsync -auHz \
     --rsync-path="${remote_rsync_command}" \
     ${orig_filelist} "${backup_to}${orig_filelist_to}"
 
-rm ${backup_filelist} ${orig_filelist}
+rm ${orig_filelist} ${exclude_filelist}
