@@ -29,11 +29,14 @@ do
     esac
 done
 
-orig_filelist_to=original_filelist
+orig_filelist_to='volume_original_files.lst'
 orig_filelist=/tmp/`basename $0`.$$.orig.filelist
-exclude_filelist=/tmp/`basename $0`.$$.backup.filelist
+exclude_filelist=/tmp/`basename $0`.$$.exclude.filelist
 backup_from=$1
 backup_to=$2
+
+touch ${orig_filelist} ${exclude_filelist}
+chmod 600 ${orig_filelist} ${exclude_filelist}
 
 cd "${backup_from}"
 find ./ -ls > ${orig_filelist}
@@ -52,4 +55,4 @@ rsync -auHz \
     --rsync-path="${remote_rsync_command}" \
     ${orig_filelist} "${backup_to}${orig_filelist_to}"
 
-rm ${backup_filelist} ${orig_filelist}
+rm ${orig_filelist} ${exclude_filelist}
