@@ -29,7 +29,7 @@ do
     esac
 done
 
-orig_filelist_to='valume_original_files.lst'
+orig_filelist_to='volume_original_files.lst'
 orig_filelist=/tmp/`basename $0`.$$.orig.filelist
 exclude_filelist=/tmp/`basename $0`.$$.exclude.filelist
 backup_from=$1
