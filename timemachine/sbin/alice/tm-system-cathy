@@ -3,6 +3,7 @@ exec {lock_fd}< "$0"
 flock --nonblock ${lock_fd} || exit 0
 
 use_sstm=false
+ssh_key="/root/.ssh/id_ecdsa"
 
 backup_from="/"
 target_dir="/volume2/alice_backup/system"
@@ -19,7 +20,7 @@ if [ -d ${midvol} ]; then
   sync
 fi
 btrfs subvolume snapshot ${backup_from} ${midvol}
-nas_backup ${midvol}/ ${backup_to}/${target_subdir}/
+nas_backup -e "ssh -i $ssh_key" ${midvol}/ ${backup_to}/${target_subdir}/
 btrfs subvolume delete ${midvol}
 
 if "${use_sstm}"; then
