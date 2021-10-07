@@ -2,7 +2,7 @@
 limit_size=4500000000000 # 4.5TB
 remote_rsync_command='sudo /opt/bin/rsync'
 
-OPT=`getopt -o l:r: -l limit-size:,remote-rsync: -- "$@"`
+OPT=`getopt -o l:r:e: -l limit-size:,remote-rsync:,rsh: -- "$@"`
 if [ $? != 0 ] ; then
     exit 1
 fi
@@ -17,6 +17,10 @@ do
             ;;
         -l | --limit-size)
             limit_size=$2
+            shift 2
+            ;;
+        -e | --rsh)
+            rsh="$2"
             shift 2
             ;;
         --)
@@ -48,11 +52,13 @@ find ./  -not -type d -print0 \
     > ${exclude_filelist}
 
 rsync -auHz \
+    -e "$rsh" \
     --delete --delete-excluded \
     --rsync-path="${remote_rsync_command}" \
     --exclude-from=${exclude_filelist} \
     ./ "${backup_to}"
 rsync -auHz \
+    -e "$rsh" \
     --rsync-path="${remote_rsync_command}" \
     ${orig_filelist} "${backup_to}${orig_filelist_to}"
 
