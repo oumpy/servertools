@@ -17,6 +17,7 @@ do
             ;;
         -l | --limit-size)
             limit_size=$2
+            shift 2
             ;;
         --)
             shift
