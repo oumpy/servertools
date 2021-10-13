@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 import datetime
+import os
 import subprocess
 import time
 import argparse
 
 cpu_sensor_command = ["/usr/bin/sensors"]
 nvidia_sensor_command = ["/usr/bin/nvidia-smi", "dmon", "-s", "p", "-c", "1"]
+sda_sensor_command = ["/bin/sh", "-c", "/usr/sbin/hddtemp", "/dev/sd?"]
+smartctl_command = ["/usr/sbin/smartctl", "-a"]
+storage_grep_command = ["/bin/grep", "Temperature"]
 
 alert_temperature = 95
 repeat_max = 10
@@ -92,11 +96,56 @@ def nvidia_sensor(T = alert_temperature, individual = False):
     else:
         return True
 
+def storage_sensor(T = alert_temperature, individual = False):
+    nowstr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cores = []
+    proc = subprocess.Popen(sda_sensor_command, stdout=subprocess.PIPE)
+    for i in range(2):
+        device = "/dev/nvme{}n1".format(i)
+        if os.path.exists(device):
+            proc = subprocess.Popen(smartctl_command + [device], stdout=subprocess.PIPE)
+            proc = subprocess.Popen(storage_grep_command, stdin=proc.stdout, stdout=subprocess.PIPE)
+            cores.append(int(proc.stdout.decode().split()[1]))
+
+    for line in proc.stdout:
+        cores.append(int(line.decode().split(':')[2].strip().rstrip("°C")))
+
+    L = len(cores)
+    mean_core = round(sum(cores)/len(cores),1)
+
+    if individual or L == 1:
+        print(('[{}] ' + ', '.join(['{}°C']*L)).format(
+            nowstr,
+            cores,
+            ))
+    else:
+        cores.sort()
+        mid_core = round(cores[L//2] if L%2 else (cores[L//2-1]+cores[L//2])/2,1)
+        max_core = round(cores[-1],1)
+        min_core = round(cores[0],1)
+        if L >= 3:
+            print('[{}] max:{}°C, mid:{}°C, min:{}°C, mean:{}°C'.format(
+                nowstr,
+                max_core, mid_core, min_core, mean_core,
+                ))
+        else:
+            print('[{}] max:{}°C, min:{}°C, mean:{}°C'.format(
+                nowstr,
+                max_core, min_core, mean_core,
+                ))
+
+    if max_core >= T:
+        return False
+    else:
+        return True
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--nvidia', action='store_true',
                         help='nvidia GPU information.')
+    parser.add_argument('--storage', action='store_true',
+                        help='storage information.')
     parser.add_argument('--temperature', type=int, default=alert_temperature, 
                         help='set alert-temperature (°C). (default: {})'.format(alert_temperature))
     parser.add_argument('--individual', action='store_true',
@@ -105,6 +154,8 @@ if __name__ == '__main__':
 
     if args.nvidia:
         sensor = nvidia_sensor
+    elif args.storage:
+        sensor = storage_sensor
     else:
         sensor = cpu_sensor
 
