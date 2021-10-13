@@ -7,9 +7,9 @@ import argparse
 
 cpu_sensor_command = ["/usr/bin/sensors"]
 nvidia_sensor_command = ["/usr/bin/nvidia-smi", "dmon", "-s", "p", "-c", "1"]
-sda_sensor_command = ["/bin/sh", "-c", "/usr/sbin/hddtemp", "/dev/sd?"]
+sda_sensor_command = ["/bin/sh", "-c", "/usr/sbin/hddtemp /dev/sd?"]
 smartctl_command = ["/usr/sbin/smartctl", "-a"]
-storage_grep_command = ["/bin/grep", "Temperature"]
+storage_grep_command = ["/bin/grep", "^Temperature"]
 
 alert_temperature = 95
 repeat_max = 10
@@ -99,16 +99,19 @@ def nvidia_sensor(T = alert_temperature, individual = False):
 def storage_sensor(T = alert_temperature, individual = False):
     nowstr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cores = []
-    proc = subprocess.Popen(sda_sensor_command, stdout=subprocess.PIPE)
     for i in range(2):
         device = "/dev/nvme{}n1".format(i)
         if os.path.exists(device):
             proc = subprocess.Popen(smartctl_command + [device], stdout=subprocess.PIPE)
             proc = subprocess.Popen(storage_grep_command, stdin=proc.stdout, stdout=subprocess.PIPE)
-            cores.append(int(proc.stdout.decode().split()[1]))
+            for line in proc.stdout:
+                line = line.decode()
+                cores.append(int(line.split()[1]))
 
+    proc = subprocess.Popen(sda_sensor_command, stdout=subprocess.PIPE)
     for line in proc.stdout:
-        cores.append(int(line.decode().split(':')[2].strip().rstrip("°C")))
+        line = line.decode()
+        cores.append(int(line.split(':')[2].strip().rstrip("°C")))
 
     L = len(cores)
     mean_core = round(sum(cores)/len(cores),1)
@@ -117,7 +120,7 @@ def storage_sensor(T = alert_temperature, individual = False):
     if individual or L == 1:
         print(('[{}] ' + ', '.join(['{}°C']*L)).format(
             nowstr,
-            cores,
+            *cores,
             ))
     else:
         cores.sort()
