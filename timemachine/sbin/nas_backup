@@ -35,13 +35,15 @@ do
 done
 
 tmpdir=/tmp/`basename $0`.$$
+timestamp=${tmpdir}/'timestamp'
 orig_filelist=${tmpdir}/'volume_original_files.lst'
 exclude_filelist=${tmpdir}/'volume_excluded_files.lst'
 backup_from=$1
 backup_to=$2
 
 mkdir -m 700 ${tmpdir}
-touch ${orig_filelist} ${exclude_filelist}
+touch ${timestamp} ${orig_filelist} ${exclude_filelist}
+chmod 640 ${tmpdir}/*
 
 cd "${backup_from}"
 find ./ -ls > ${orig_filelist}
@@ -57,6 +59,9 @@ rsync -auHz \
     --rsync-path="${remote_rsync_command}" \
     --exclude-from=${exclude_filelist} \
     ./ "${backup_to}"
+
+touch -r ${timestamp} ${orig_filelist} ${exclude_filelist}
+rm ${timestamp}
 rsync -auHz \
     -e "$rsh" \
     --rsync-path="${remote_rsync_command}" \
