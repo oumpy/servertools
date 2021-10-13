@@ -145,6 +145,8 @@ def storage_sensor(T = alert_temperature, individual = False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--cpu', action='store_true',
+                        help='CPU information.')
     parser.add_argument('--nvidia', action='store_true',
                         help='nvidia GPU information.')
     parser.add_argument('--storage', action='store_true',
