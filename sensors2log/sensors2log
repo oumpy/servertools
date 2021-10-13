@@ -32,7 +32,6 @@ def cpu_sensor(T = alert_temperature, individual=False):
             package = temperature
         elif title[:4] == "Core":
             cores.append(temperature)
-    cores.sort(reverse=True)
     L = len(cores)
     package = round(package,1)
     mean_core = round(sum(cores)/len(cores),1)
@@ -43,6 +42,7 @@ def cpu_sensor(T = alert_temperature, individual=False):
             *cores,
             ))
     else:
+        cores.sort(reverse=True)
         mid_core = round(cores[L//2] if L%2 else (cores[L//2-1]+cores[L//2])/2,1)
         max_core = round(cores[0],1)
         min_core = round(cores[-1],1)
