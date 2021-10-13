@@ -150,7 +150,7 @@ if __name__ == '__main__':
     parser.add_argument('--nvidia', action='store_true',
                         help='nvidia GPU information.')
     parser.add_argument('--storage', action='store_true',
-                        help='storage information.')
+                        help='storage information. it requires root authority.')
     parser.add_argument('--temperature', type=int, default=alert_temperature, 
                         help='set alert-temperature (°C). (default: {})'.format(alert_temperature))
     parser.add_argument('--individual', action='store_true',
