@@ -11,7 +11,7 @@ alert_temperature = 95
 repeat_max = 10
 repeat_interval = 30
 
-def cpu_sensor(T = alert_temperature):
+def cpu_sensor(T = alert_temperature, individual=False):
     nowstr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     package = 0
     cores = []
@@ -36,17 +36,23 @@ def cpu_sensor(T = alert_temperature):
     max_core = round(cores[-1],1)
     min_core = round(cores[0],1)
 
-    print('[{}] package:{}°C, max:{}°C, mid:{}°C, min:{}°C, mean:{}°C'.format(
-        nowstr,
-        package, max_core, mid_core, min_core, mean_core,
-        ))
+    if individual:
+        print(('[{}] ' + ', '.join(['{}°C']*L)).format(
+            nowstr,
+            cores,
+            ))
+    else:
+        print('[{}] package:{}°C, max:{}°C, mid:{}°C, min:{}°C, mean:{}°C'.format(
+            nowstr,
+            package, max_core, mid_core, min_core, mean_core,
+            ))
 
     if package >= T:
         return False
     else:
         return True
 
-def nvidia_sensor(T = alert_temperature):
+def nvidia_sensor(T = alert_temperature, individual = False):
     nowstr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cores = []
     proc = subprocess.Popen(nvidia_sensor_command, stdout=subprocess.PIPE)
@@ -64,7 +70,12 @@ def nvidia_sensor(T = alert_temperature):
     max_core = round(cores[-1],1)
     min_core = round(cores[0],1)
 
-    if L >= 3:
+    if individual:
+        print(('[{}] ' + ', '.join(['{}°C']*L)).format(
+            nowstr,
+            cores,
+            ))
+    elif L >= 3:
         print('[{}] max:{}°C, mid:{}°C, min:{}°C, mean:{}°C'.format(
             nowstr,
             max_core, mid_core, min_core, mean_core,
@@ -92,6 +103,8 @@ if __name__ == '__main__':
                         help='nvidia GPU information.')
     parser.add_argument('--temperature', type=int, default=alert_temperature, 
                         help='set alert-temperature (°C). (default: {})'.format(alert_temperature))
+    parser.add_argument('--individual', action='store_true',
+                        help='show temperatures of individual devices.')
     args = parser.parse_args()
 
     if args.nvidia:
@@ -100,7 +113,7 @@ if __name__ == '__main__':
         sensor = cpu_sensor
 
     i = 0
-    while not sensor(args.temperature):
+    while not sensor(args.temperature, args.individual):
         if i >= repeat_max:
             break
         else:
