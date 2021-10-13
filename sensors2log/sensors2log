@@ -40,7 +40,7 @@ def cpu_sensor(T = alert_temperature, individual=False):
     if individual:
         print(('[{}] ' + ', '.join(['{}°C']*L)).format(
             nowstr,
-            cores,
+            *cores,
             ))
     else:
         mid_core = round(cores[L//2] if L%2 else (cores[L//2-1]+cores[L//2])/2,1)
@@ -69,16 +69,16 @@ def nvidia_sensor(T = alert_temperature, individual = False):
         cores.append(temperature)
     L = len(cores)
     mean_core = round(sum(cores)/len(cores),1)
+    max_core = round(max(cores),1)
 
     if individual or L == 1:
         print(('[{}] ' + ', '.join(['{}°C']*L)).format(
             nowstr,
-            cores,
+            *cores,
             ))
     else:
         cores.sort()
         mid_core = round(cores[L//2] if L%2 else (cores[L//2-1]+cores[L//2])/2,1)
-        max_core = round(cores[-1],1)
         min_core = round(cores[0],1)
         if L >= 3:
             print('[{}] max:{}°C, mid:{}°C, min:{}°C, mean:{}°C'.format(
@@ -112,6 +112,7 @@ def storage_sensor(T = alert_temperature, individual = False):
 
     L = len(cores)
     mean_core = round(sum(cores)/len(cores),1)
+    max_core = round(max(cores),1)
 
     if individual or L == 1:
         print(('[{}] ' + ', '.join(['{}°C']*L)).format(
@@ -121,7 +122,6 @@ def storage_sensor(T = alert_temperature, individual = False):
     else:
         cores.sort()
         mid_core = round(cores[L//2] if L%2 else (cores[L//2-1]+cores[L//2])/2,1)
-        max_core = round(cores[-1],1)
         min_core = round(cores[0],1)
         if L >= 3:
             print('[{}] max:{}°C, mid:{}°C, min:{}°C, mean:{}°C'.format(
