@@ -2,7 +2,7 @@
 limit_size=4500000000000 # 4.5TB
 remote_rsync_command='sudo /opt/bin/rsync'
 
-OPT=`getopt -o l:r: -l limit-size:,remote-rsync: -- "$@"`
+OPT=`getopt -o l:r:e: -l limit-size:,remote-rsync:,rsh: -- "$@"`
 if [ $? != 0 ] ; then
     exit 1
 fi
@@ -17,6 +17,11 @@ do
             ;;
         -l | --limit-size)
             limit_size=$2
+            shift 2
+            ;;
+        -e | --rsh)
+            rsh="$2"
+            shift 2
             ;;
         --)
             shift
@@ -29,14 +34,16 @@ do
     esac
 done
 
-orig_filelist_to='volume_original_files.lst'
-orig_filelist=/tmp/`basename $0`.$$.orig.filelist
-exclude_filelist=/tmp/`basename $0`.$$.exclude.filelist
+tmpdir=/tmp/`basename $0`.$$
+timestamp=${tmpdir}/'timestamp'
+orig_filelist=${tmpdir}/'volume_original_files.lst'
+exclude_filelist=${tmpdir}/'volume_excluded_files.lst'
 backup_from=$1
 backup_to=$2
 
-touch ${orig_filelist} ${exclude_filelist}
-chmod 600 ${orig_filelist} ${exclude_filelist}
+mkdir -m 700 ${tmpdir}
+touch ${timestamp} ${orig_filelist} ${exclude_filelist}
+chmod 640 ${tmpdir}/*
 
 cd "${backup_from}"
 find ./ -ls > ${orig_filelist}
@@ -47,12 +54,17 @@ find ./  -not -type d -print0 \
     > ${exclude_filelist}
 
 rsync -auHz \
+    -e "$rsh" \
     --delete --delete-excluded \
     --rsync-path="${remote_rsync_command}" \
     --exclude-from=${exclude_filelist} \
     ./ "${backup_to}"
-rsync -auHz \
-    --rsync-path="${remote_rsync_command}" \
-    ${orig_filelist} "${backup_to}${orig_filelist_to}"
 
-rm ${orig_filelist} ${exclude_filelist}
+touch -r ${timestamp} ${orig_filelist} ${exclude_filelist}
+rm ${timestamp}
+rsync -auHz \
+    -e "$rsh" \
+    --rsync-path="${remote_rsync_command}" \
+    ${tmpdir}/ "${backup_to}"
+
+rm -rf ${tmpdir}
