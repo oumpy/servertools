@@ -12,7 +12,7 @@ smartctl_command = ["/usr/sbin/smartctl", "-a"]
 storage_grep_command = ["/bin/grep", "^Temperature"]
 
 alert_temperature = 95
-repeat_max = 10
+repeat_max = 9
 repeat_interval = 30
 
 def cpu_sensor(T = alert_temperature, individual=False):
@@ -153,6 +153,10 @@ if __name__ == '__main__':
                         help='storage information. it requires root authority.')
     parser.add_argument('--temperature', type=int, default=alert_temperature, 
                         help='set alert-temperature (°C). (default: {})'.format(alert_temperature))
+    parser.add_argument('--repeat-interval', type=int, default=repeat_interval, 
+                        help='set repeat interval (sec). (default: {})'.format(repeat_interval))
+    parser.add_argument('--repeat-max', type=int, default=repeat_max, 
+                        help='set max repeat when temperature goes up. (default: {})'.format(repeat_max))
     parser.add_argument('--individual', action='store_true',
                         help='show temperatures of individual devices.')
     args = parser.parse_args()
@@ -166,8 +170,8 @@ if __name__ == '__main__':
 
     i = 0
     while not sensor(args.temperature, args.individual):
-        if i >= repeat_max:
+        if i >= args.repeat_max:
             break
         else:
             i += 1
-            time.sleep(repeat_interval)
+            time.sleep(args.repeat_interval)
