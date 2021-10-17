@@ -40,7 +40,8 @@ def cpu_sensor(T = alert_temperature, individual=False):
         print(('[{}] ' + ', '.join(['{}°C']*L)).format(
             nowstr,
             *cores,
-            ))
+            ),
+            flush=True)
     else:
         cores.sort(reverse=True)
         mid_core = round(cores[L//2] if L%2 else (cores[L//2-1]+cores[L//2])/2,1)
@@ -49,7 +50,8 @@ def cpu_sensor(T = alert_temperature, individual=False):
         print('[{}] package:{}°C, max:{}°C, mid:{}°C, min:{}°C, mean:{}°C'.format(
             nowstr,
             package, max_core, mid_core, min_core, mean_core,
-            ))
+            ),
+            flush=True)
 
     if package >= T:
         return False
@@ -75,7 +77,8 @@ def nvidia_sensor(T = alert_temperature, individual = False):
         print(('[{}] ' + ', '.join(['{}°C']*L)).format(
             nowstr,
             *cores,
-            ))
+            ),
+            flush=True)
     else:
         cores.sort()
         mid_core = round(cores[L//2] if L%2 else (cores[L//2-1]+cores[L//2])/2,1)
@@ -84,12 +87,14 @@ def nvidia_sensor(T = alert_temperature, individual = False):
             print('[{}] max:{}°C, mid:{}°C, min:{}°C, mean:{}°C'.format(
                 nowstr,
                 max_core, mid_core, min_core, mean_core,
-                ))
+                ),
+                flush=True)
         else:
             print('[{}] max:{}°C, min:{}°C, mean:{}°C'.format(
                 nowstr,
                 max_core, min_core, mean_core,
-                ))
+                ),
+                flush=True)
 
     if max_core >= T:
         return False
@@ -121,7 +126,8 @@ def storage_sensor(T = alert_temperature, individual = False):
         print(('[{}] ' + ', '.join(['{}°C']*L)).format(
             nowstr,
             *cores,
-            ))
+            ),
+            flush=True)
     else:
         cores.sort()
         mid_core = round(cores[L//2] if L%2 else (cores[L//2-1]+cores[L//2])/2,1)
@@ -130,12 +136,14 @@ def storage_sensor(T = alert_temperature, individual = False):
             print('[{}] max:{}°C, mid:{}°C, min:{}°C, mean:{}°C'.format(
                 nowstr,
                 max_core, mid_core, min_core, mean_core,
-                ))
+                ),
+                flush=True)
         else:
             print('[{}] max:{}°C, min:{}°C, mean:{}°C'.format(
                 nowstr,
                 max_core, min_core, mean_core,
-                ))
+                ),
+                flush=True)
 
     if max_core >= T:
         return False
