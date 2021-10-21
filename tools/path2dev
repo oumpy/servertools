@@ -1,8 +1,13 @@
-#!/bin/sh
-for argv; do
-  argv=$(realpath "$argv")
-  mount \
-  | awk 'BEGIN{OFS="\t"} {print $3, $1, $5}' \
-  | sort -r \
-  | awk '"'"$argv"'"~$1 {print; exit}'
+#!/bin/bash
+if [ "$#" -le 0 ]; then
+    args=("./")
+else
+    args=("$@")
+fi
+for v in ${args[@]}; do
+    v=$(realpath "$v")
+    mount \
+    | awk 'BEGIN{OFS="\t"} {print $3, $1, $5}' \
+    | sort -r \
+    | awk '"'"$v"'"~$1 {print; exit}'
 done
