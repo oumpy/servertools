@@ -3,7 +3,7 @@ orig_dir="$1"
 orig_snap="$2"
 dest_dir="$3"
 
-fs=$(path2dev $(cd $(dirname "$dest_dir"); pwd) | awk '{print $3}')
+fs=$(path2dev "$dest_dir" | awk '{print $3}')
 if [ $fs = "btrfs" ]; then
     if [ ! -d "$dest_dir" ]; then
         btrfs subvolume create "$dest_dir"
