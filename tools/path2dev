@@ -1,0 +1,8 @@
+#!/bin/sh
+for argv; do
+  argv=$(realpath "$argv")
+  mount \
+  | awk 'BEGIN{OFS="\t"} {print $3, $1, $5}' \
+  | sort -r \
+  | awk '"'"$argv"'"~$1 {print; exit}'
+done
