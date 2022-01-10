@@ -53,6 +53,12 @@ find ./  -not -type d -print0 \
     | awk -F '\t' '{S+=$1; if(S>'${limit_size}'){print $2}}' \
     > ${exclude_filelist}
 
+backup_to_arr=(${backup_to//:/ })
+backup_to_host=${backup_to_arr[0]}
+backup_to_dir=${backup_to_arr[1]}
+cat ${exclude_filelist} \
+    | awk '{print "\"" "'"${backup_to_dir}"'" "/" $0 "\""}' \
+    | xargs -d'\n' ${rsh} "${backup_to_host}" sudo rm -f
 rsync -auHz \
     -e "$rsh" \
     --delete --delete-excluded \
@@ -67,4 +73,4 @@ rsync -auHz \
     --rsync-path="${remote_rsync_command}" \
     ${tmpdir}/ "${backup_to}"
 
-rm -rf ${tmpdir}
+# rm -rf ${tmpdir}
