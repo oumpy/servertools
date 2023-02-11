@@ -1,0 +1,217 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import os, sys
+from mattermostdriver import Driver
+import argparse
+import re
+
+# Example:
+# $ hogehoge | post2mm
+#
+
+class Manager(object) :
+    def __init__(self):
+        pass
+    def getChannelId(self, team_name, channel_name) :
+        return None
+    def getTeamId(self, team_name) :
+        return None
+    def getMyId(self) :
+        return None
+    def getTeamMembersData(self, team_id) :
+        return list()
+    def getChannelMembersData(self, channel_id) :
+        return list()
+    def getTeamMembers(self, team_id) :
+        return list()
+    def getChannelMembers(self, channel_id) :
+        return list()
+    def getIdNameDict(self, channel_id):
+        return dict()
+    def post(self, channel_id, message, **kwargs):
+        return None
+
+class MattermostManager(Manager):
+    def __init__(self, token, **kwargs):
+        options={
+            'token' :   token,
+        } | kwargs
+        self.mmDriver = Driver(options=options)
+
+    def getChannelId(self, channel_name, team_name) :
+        team_id = self.getTeamId(team_name)
+        self.mmDriver.login()
+        channel_id = self.mmDriver.channels.get_channel_by_name(team_id, channel_name)['id']
+        self.mmDriver.logout()
+        return channel_id
+
+    def getTeamId(self, team_name):
+        self.mmDriver.login()
+        if not self.mmDriver.teams.check_team_exists(team_name):
+            return None
+        team_id = self.mmDriver.teams.get_team_by_name(team_name)['id']
+        self.mmDriver.logout()
+        return team_id
+
+    def getMyId(self) :
+        self.mmDriver.login()
+        my_id = self.mmDriver.users.get_user(user_id='me')['id']
+        self.mmDriver.logout()
+        return my_id
+
+    def getTeamMembersData(self, team_id, per_page=200) :
+        # get all users for a team
+        # with the max of 200 per page, we need to iterate a bit over the pages
+        users_data = []
+        pgNo = 0
+        def get_users(team_id, pgNo, per_page=per_page):
+            self.mmDriver.login()
+            users_data = self.mmDriver.users.get_users(params={
+                    'in_team'   :   team_id,
+                    'page'      :   str(pgNo),
+                    'per_page'  :   per_page,
+            })
+            self.mmDriver.logout()
+            return users_data
+        teamUsers = get_users(team_id, pgNo)
+        while teamUsers:
+            users_data += teamUsers
+            pgNo += 1
+            teamUsers = get_users(team_id, pgNo)
+        return users_data
+
+    def getChannelMembersData(self, channel_id, per_page=200) :
+        # get all users for a channel
+        # with the max of 200 per page, we need to iterate a bit over the pages
+        users_data = []
+        pgNo = 0
+        def get_users(channel_id, pgNo, per_page=per_page):
+            self.mmDriver.login()
+            users_data = self.mmDriver.users.get_users(params={
+                    'in_channel':   channel_id,
+                    'page'      :   str(pgNo),
+                    'per_page'  :   per_page,
+            })
+            self.mmDriver.logout()
+            return users_data
+        channelUsers = get_users(channel_id, pgNo)
+        while channelUsers:
+            users_data += channelUsers
+            pgNo += 1
+            channelUsers = get_users(channel_id, pgNo)
+        return users_data
+
+    def getChannelMembers(self, channel_id, per_page=200) :
+        users_data = self.getChannelMembersData(channel_id, per_page)
+        return [user['id'] for user in users_data]
+
+    def getIdNameDict(self, channel_id):
+        users_data = self.getChannelMembersData(channel_id)
+        return {user['id'] : user['username'] for user in users_data}
+
+    def post(self, channel_id, message, **kwargs):
+        self.mmDriver.login()
+        param = kwargs | {
+            'channel_id':   channel_id,
+            'message'   :   message,
+            }
+        response = self.mmDriver.posts.create_post(options=param)
+        self.mmDriver.logout()
+        return response
+
+token_file = 'mattermost_token'
+team_name = 'main'
+channel_name = 'random'
+base_dir = os.path.join(os.environ['HOME'], 'etc')
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--channel', default=channel_name,
+                        help='channel to post.')
+    parser.add_argument('--token', default=None,
+                        help='bot token.')
+    parser.add_argument('--tokenfile', default=None,
+                        help='file including bot token.')
+    # parser.add_argument('--ts', default=None,
+    #                     help='specify the thread ts.')
+    # parser.add_argument('--mute', help='post in thread without showing on channel.',
+    #                     action='store_true')
+    parser.add_argument('--separator', default=None,
+                        help='split posts by lines beginning with the specified separator (regex available).')
+    parser.add_argument('--optionline', default='%',
+                        help='set in-line-header to set options in the input.')    
+    parser.add_argument('-t', '--team', default=team_name,
+                        help='team to post.')
+    parser.add_argument('--server', default='',
+                        help='mattermost server.')
+    parser.add_argument('--scheme', default='https',
+                        help='mattermost scheme.')
+    parser.add_argument('--port', type=int, default=443,
+                        help='mattermost port.')
+    parser.add_argument('--token-id', default='',
+                        help='mattermost token_id.')
+    args = parser.parse_args()
+    argc = len(sys.argv)
+    token_file_path = os.path.join(base_dir, token_file)
+
+    message_lines = sys.stdin.readlines()
+    if not ''.join(message_lines).strip():
+        exit()
+
+    submessages = []
+    submessage_lines = []
+    for line in message_lines:
+        if not args.separator or not re.match(args.separator, line):
+            submessage_lines.append(line)
+        elif submessage_lines:
+            submessages.append(submessage_lines)
+            submessage_lines = []
+    else:
+        if submessage_lines:
+            submessages.append(submessage_lines)
+
+    for submessage_lines in submessages:
+        sys.argv = sys.argv[:argc]
+        args = parser.parse_args()
+
+        # read submessage options
+        options = []
+        option_lines = 0
+        for line in submessage_lines:
+            m = re.match(args.optionline, line)
+            if m:
+                options += line[m.end():].strip().split()
+                option_lines += 1
+            else:
+                break
+        if option_lines:
+            sys.argv += options
+            args = parser.parse_args()
+
+        submessage = ''.join(submessage_lines[option_lines:]).rstrip('\n')
+        # continue if submessage is empty
+        if not submessage.strip():
+            continue
+
+        # set submessage parameters
+        if args.token:
+            token = args.token
+        elif args.tokenfile:
+            with open(args.tokenfile, 'r') as f:
+                token = f.readline().rstrip()
+        else:
+            with open(token_file_path, 'r') as f:
+                token = f.readline().rstrip()
+
+        config = {
+            'url' : args.server,
+            'scheme' : args.scheme,
+            'port' : args.port,
+            'token_id' : args.token_id,
+        }
+        manager = MattermostManager(token, **config)
+        channel_id =  manager.getChannelId(args.channel, args.team)
+
+        # post submessage
+        manager.post(channel_id, submessage)
