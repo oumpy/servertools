@@ -211,7 +211,7 @@ if __name__ == '__main__':
             'token_id' : args.token_id,
         }
         manager = MattermostManager(token, **config)
-        channel_id =  manager.getChannelId(channel_name, args.team)
+        channel_id =  manager.getChannelId(args.channel, args.team)
 
         # post submessage
         manager.post(channel_id, submessage)
