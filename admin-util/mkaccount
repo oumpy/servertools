@@ -94,7 +94,7 @@ if __name__ == '__main__':
             'adduser',
             '-q',
             '--gecos', '{},{},{}'.format(args.name, args.gradyear, args.studentid),
-            '--disabled-login',
+            '--disabled-password',
             args.accountname,
         ])
     print('User {0} and group {0} created.'.format(args.accountname), file=sys.stdout)
